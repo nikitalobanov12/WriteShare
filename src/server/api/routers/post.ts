@@ -5,6 +5,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { getUserPosts } from "~/lib/dal";
 
 export const postRouter = createTRPCRouter({
   hello: publicProcedure
@@ -21,7 +22,7 @@ export const postRouter = createTRPCRouter({
       return ctx.db.post.create({
         data: {
           name: input.name,
-          createdBy: { connect: { id: ctx.session.user.id } },
+          createdBy: { connect: { id: ctx.session.userId } },
         },
       });
     }),
@@ -29,10 +30,15 @@ export const postRouter = createTRPCRouter({
   getLatest: protectedProcedure.query(async ({ ctx }) => {
     const post = await ctx.db.post.findFirst({
       orderBy: { createdAt: "desc" },
-      where: { createdBy: { id: ctx.session.user.id } },
+      where: { createdBy: { id: ctx.session.userId } },
     });
 
     return post ?? null;
+  }),
+
+  getAll: protectedProcedure.query(async () => {
+    // Use DAL function for proper auth and data fetching
+    return await getUserPosts();
   }),
 
   getSecretMessage: protectedProcedure.query(() => {
