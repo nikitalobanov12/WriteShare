@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { auth } from "~/server/auth";
+import { auth } from "@/auth";
 import { db } from "~/server/db";
 
 /**
