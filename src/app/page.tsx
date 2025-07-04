@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { LatestPost } from "~/app/_components/post";
 import { api, HydrateClient } from "~/trpc/server";
 import { Button } from "~/components/ui/button";
 import Image from "next/image";
@@ -17,7 +16,6 @@ export default async function Home() {
     redirect("/login");
   }
 
-  const hello = await api.post.hello({ text: "from tRPC" });
 
   if (session?.user) {
     void api.post.getLatest.prefetch();
