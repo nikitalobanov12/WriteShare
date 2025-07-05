@@ -123,11 +123,11 @@ export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(async ({ ctx, next }) => {
     const session = await verifySession();
-    
+
     if (!session) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
-    
+
     return next({
       ctx: {
         // Use verified session data from DAL

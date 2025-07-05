@@ -9,7 +9,7 @@ import { db } from "~/server/db";
  */
 export const verifySession = cache(async () => {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return null;
   }
@@ -29,7 +29,7 @@ export const verifySession = cache(async () => {
  */
 export const getUser = cache(async () => {
   const session = await verifySession();
-  
+
   if (!session) {
     return null;
   }
@@ -62,7 +62,7 @@ export const getUser = cache(async () => {
  */
 export const getUserPosts = cache(async () => {
   const session = await verifySession();
-  
+
   if (!session) {
     return [];
   }
@@ -96,7 +96,7 @@ export const getUserPosts = cache(async () => {
  */
 export const checkUserPermission = cache(async (permission: string) => {
   const session = await verifySession();
-  
+
   if (!session) {
     return false;
   }
@@ -104,6 +104,6 @@ export const checkUserPermission = cache(async (permission: string) => {
   // For now, all authenticated users have basic permissions
   // This can be extended with role-based checks later
   const basicPermissions = ["read", "write", "create"];
-  
+
   return basicPermissions.includes(permission);
-}); 
+});

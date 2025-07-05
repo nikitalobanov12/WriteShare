@@ -17,16 +17,18 @@ const createDocumentSchema = z.object({
 export async function createDocument(formData: FormData) {
   // Verify user session using DAL
   const session = await verifySession();
-  
+
   if (!session) {
     redirect("/login");
   }
 
   // Check if user has permission to create documents
   const canCreate = await checkUserPermission("create");
-  
+
   if (!canCreate) {
-    throw new Error("Unauthorized: You don't have permission to create documents");
+    throw new Error(
+      "Unauthorized: You don't have permission to create documents",
+    );
   }
 
   // Validate form data
@@ -52,7 +54,7 @@ export async function createDocument(formData: FormData) {
 
     // Revalidate the home page to show the new document
     revalidatePath("/");
-    
+
     return {
       success: true,
       document,
@@ -70,7 +72,7 @@ export async function createDocument(formData: FormData) {
  */
 export async function deleteDocument(documentId: string) {
   const session = await verifySession();
-  
+
   if (!session) {
     redirect("/login");
   }
@@ -96,10 +98,10 @@ export async function deleteDocument(documentId: string) {
     });
 
     revalidatePath("/");
-    
+
     return { success: true };
   } catch (error) {
     console.error("Failed to delete document:", error);
     return { error: "Failed to delete document. Please try again." };
   }
-} 
+}

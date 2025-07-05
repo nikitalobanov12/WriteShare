@@ -4,21 +4,27 @@ import { signOut } from "next-auth/react";
 import { Button } from "~/components/ui/button";
 
 interface SignOutButtonProps {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
 }
 
-export function SignOutButton({ 
-  variant = "outline", 
+export function SignOutButton({
+  variant = "outline",
   size = "sm",
-  className 
+  className,
 }: SignOutButtonProps) {
   const handleSignOut = async () => {
     try {
-      await signOut({ 
+      await signOut({
         callbackUrl: "/login",
-        redirect: true 
+        redirect: true,
       });
     } catch (error) {
       console.error("Sign out error:", error);
@@ -26,13 +32,13 @@ export function SignOutButton({
   };
 
   return (
-    <Button 
-      variant={variant} 
-      size={size} 
+    <Button
+      variant={variant}
+      size={size}
       className={className}
       onClick={handleSignOut}
     >
       Sign out
     </Button>
   );
-} 
+}
