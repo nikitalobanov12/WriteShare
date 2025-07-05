@@ -63,6 +63,10 @@ model User {
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+    createdWorkspaces Workspace[]
+    memberships   WorkspaceMembership[]
+    workspaceInvites WorkspaceInvite[] @relation("invitedUser")
+    sentWorkspaceInvites WorkspaceInvite[] @relation("inviter")
 }
 
 model VerificationToken {
@@ -71,4 +75,37 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// Multi-tenancy: Workspaces and membership/invite support
+model Workspace {
+    id           Int      @id @default(autoincrement())
+    name         String
+    createdAt    DateTime @default(now())
+    createdBy    User     @relation(fields: [createdById], references: [id])
+    createdById  String
+    memberships  WorkspaceMembership[]
+    invites      WorkspaceInvite[]
+}
+
+model WorkspaceMembership {
+    workspace   Workspace @relation(fields: [workspaceId], references: [id])
+    workspaceId Int
+    user        User      @relation(fields: [userId], references: [id])
+    userId      String
+    joinedAt    DateTime  @default(now())
+
+    @@id([workspaceId, userId])
+}
+
+model WorkspaceInvite {
+    id            Int       @id @default(autoincrement())
+    workspace     Workspace @relation(fields: [workspaceId], references: [id])
+    workspaceId   Int
+    invitedUser   User      @relation("invitedUser", fields: [invitedUserId], references: [id])
+    invitedUserId String
+    inviter       User      @relation("inviter", fields: [inviterId], references: [id])
+    inviterId     String
+    status        String    @default("pending")
+    createdAt     DateTime  @default(now())
 }
