@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
+import GitHub from "next-auth/providers/github";
 import { db } from "~/server/db";
 import { env } from "~/env";
 
@@ -13,8 +14,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       clientSecret: env.AUTH_DISCORD_SECRET,
     }),
     Google({
-      clientId: env.AUTH_GOOGLE_CLIENT_ID as string,
-      clientSecret: env.AUTH_GOOGLE_SECRET as string,
+      clientId: env.AUTH_GOOGLE_CLIENT_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
+    }),
+    GitHub({
+      clientId: env.AUTH_GITHUB_ID,
+      clientSecret: env.AUTH_GITHUB_SECRET,
     }),
   ],
   pages: {
