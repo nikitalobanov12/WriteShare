@@ -67,6 +67,7 @@ model User {
     memberships   WorkspaceMembership[]
     workspaceInvites WorkspaceInvite[] @relation("invitedUser")
     sentWorkspaceInvites WorkspaceInvite[] @relation("inviter")
+    pages         Page[]
 }
 
 model VerificationToken {
@@ -86,6 +87,7 @@ model Workspace {
     createdById  String
     memberships  WorkspaceMembership[]
     invites      WorkspaceInvite[]
+    pages        Page[]
 }
 
 model WorkspaceMembership {
@@ -108,4 +110,28 @@ model WorkspaceInvite {
     inviterId     String
     status        String    @default("pending")
     createdAt     DateTime  @default(now())
+}
+
+model Page {
+    id          String    @id @default(cuid())
+    title       String
+    content     String?   @db.Text
+    emoji       String?
+    coverImage  String?
+    isArchived  Boolean   @default(false)
+    parentId    String?
+    workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+    workspaceId Int
+    author      User      @relation(fields: [authorId], references: [id])
+    authorId    String
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    // Self-referential relation for nested pages
+    parent      Page?     @relation("PageToPage", fields: [parentId], references: [id], onDelete: Cascade)
+    children    Page[]    @relation("PageToPage")
+
+    @@index([workspaceId])
+    @@index([parentId])
+    @@index([authorId])
 }

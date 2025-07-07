@@ -216,7 +216,21 @@ function WorkspaceItem({
   onClick: () => void; 
   isActive: boolean;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(isActive);
+
+  // Get pages for this workspace
+  const { data: pages = [] } = api.page.getWorkspacePages.useQuery(
+    { workspaceId: workspace.id },
+    { 
+      enabled: isOpen, // Only fetch when expanded
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  // Filter top-level pages (pages without a parent)
+  const topLevelPages = pages.filter(page => !page.parentId);
 
   React.useEffect(() => {
     if (isActive) {
@@ -224,13 +238,21 @@ function WorkspaceItem({
     }
   }, [isActive]);
 
+  const handlePageClick = (pageId: string) => {
+    router.push(`/workspaces/${workspace.id}/pages/${pageId}`);
+  };
+
+  const handleCreatePage = () => {
+    router.push(`/workspaces/${workspace.id}`);
+  };
+
   return (
     <SidebarMenuItem>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
             className="w-full justify-start group/workspace"
-            isActive={isActive}
+            isActive={isActive && pathname === `/workspaces/${workspace.id}`}
           >
             <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/workspace:rotate-90" />
             <FileText className="h-4 w-4" />
@@ -242,14 +264,128 @@ function WorkspaceItem({
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={onClick}
-                isActive={isActive}
+                isActive={isActive && pathname === `/workspaces/${workspace.id}`}
                 className="w-full justify-start"
               >
                 <FileText className="h-4 w-4" />
-                Open Workspace
+                Overview
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {/* TODO: Add pages/documents under workspace */}
+            
+            {/* Pages Section */}
+            <SidebarMenuItem>
+              <div className="flex items-center justify-between px-2 py-1">
+                <span className="text-xs font-medium text-muted-foreground">Pages</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0"
+                  onClick={handleCreatePage}
+                >
+                  <Plus className="h-3 w-3" />
+                  <span className="sr-only">Create page</span>
+                </Button>
+              </div>
+            </SidebarMenuItem>
+
+            {/* Pages List */}
+            {topLevelPages.length === 0 ? (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleCreatePage}
+                  className="w-full justify-start text-muted-foreground text-xs"
+                >
+                  <Plus className="h-3 w-3" />
+                  Create your first page
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ) : (
+              topLevelPages.map((page) => (
+                <PageTreeItem
+                  key={page.id}
+                  page={page}
+                  pages={pages}
+                  workspaceId={workspace.id}
+                  onPageClick={handlePageClick}
+                />
+              ))
+            )}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
+  );
+}
+
+interface PageTreeItemProps {
+  page: {
+    id: string;
+    title: string;
+    emoji?: string | null;
+    parentId?: string | null;
+  };
+  pages: Array<{
+    id: string;
+    title: string;
+    emoji?: string | null;
+    parentId?: string | null;
+  }>;
+  workspaceId: number;
+  onPageClick: (pageId: string) => void;
+}
+
+function PageTreeItem({ page, pages, workspaceId, onPageClick }: PageTreeItemProps) {
+  const pathname = usePathname();
+  const currentPageId = pathname.split('/').pop();
+  
+  // Get child pages for this page
+  const childPages = pages.filter(p => p.parentId === page.id);
+  
+  const isActive = currentPageId === page.id;
+
+  if (childPages.length === 0) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          isActive={isActive}
+          onClick={() => onPageClick(page.id)}
+          className="w-full justify-start text-xs pl-8"
+        >
+          <span className="text-xs mr-1">{page.emoji ?? "📄"}</span>
+          <span className="truncate">{page.title}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <SidebarMenuItem>
+      <Collapsible
+        className="group/page-collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+        defaultOpen={isActive || childPages.some(child => child.id === currentPageId)}
+      >
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            isActive={isActive}
+            onClick={() => onPageClick(page.id)}
+            className="w-full justify-start text-xs pl-8"
+          >
+            <ChevronRight className="h-3 w-3 transition-transform" />
+            <span className="text-xs mr-1">{page.emoji ?? "📄"}</span>
+            <span className="truncate">{page.title}</span>
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {childPages.map((childPage) => (
+              <PageTreeItem
+                key={childPage.id}
+                page={childPage}
+                pages={pages}
+                workspaceId={workspaceId}
+                onPageClick={onPageClick}
+              />
+            ))}
           </SidebarMenuSub>
         </CollapsibleContent>
       </Collapsible>
