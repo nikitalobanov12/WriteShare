@@ -1,5 +1,13 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { 
+  workspaceCache, 
+  pageCache, 
+  cacheOrFetch, 
+  invalidateCache,
+  generateCacheKey 
+} from "~/lib/cache";
+import { CACHE_TTL } from "~/server/redis";
 
 export const pageRouter = createTRPCRouter({
   getWorkspacePages: protectedProcedure
@@ -19,67 +27,83 @@ export const pageRouter = createTRPCRouter({
         throw new Error("You don't have access to this workspace");
       }
 
-      // Get all pages in the workspace, ordered by creation date
-      const pages = await ctx.db.page.findMany({
-        where: {
-          workspaceId: input.workspaceId,
-          isArchived: false,
-        },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-          children: {
+      const cacheKey = generateCacheKey("WORKSPACE", input.workspaceId, "pages");
+      
+      return await cacheOrFetch(
+        cacheKey,
+        async () => {
+          // Get all pages in the workspace, ordered by creation date
+          const pages = await ctx.db.page.findMany({
             where: {
+              workspaceId: input.workspaceId,
               isArchived: false,
             },
-            orderBy: {
-              createdAt: "asc",
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
+              children: {
+                where: {
+                  isArchived: false,
+                },
+                orderBy: {
+                  createdAt: "asc",
+                },
+              },
             },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
 
-      return pages;
+          return pages;
+        },
+        CACHE_TTL.MEDIUM
+      );
     }),
 
   getPage: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const page = await ctx.db.page.findUnique({
-        where: { id: input.id },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-          workspace: {
+      const cacheKey = generateCacheKey("PAGE", input.id, "details");
+      
+      return await cacheOrFetch(
+        cacheKey,
+        async () => {
+          const page = await ctx.db.page.findUnique({
+            where: { id: input.id },
             include: {
-              memberships: {
-                where: { userId: ctx.session.userId },
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
+              workspace: {
+                include: {
+                  memberships: {
+                    where: { userId: ctx.session.userId },
+                  },
+                },
               },
             },
-          },
+          });
+
+          if (!page || page.workspace.memberships.length === 0) {
+            throw new Error("Page not found or you don't have access");
+          }
+
+          return page;
         },
-      });
-
-      if (!page || page.workspace.memberships.length === 0) {
-        throw new Error("Page not found or you don't have access");
-      }
-
-      return page;
+        CACHE_TTL.MEDIUM
+      );
     }),
 
   createPage: protectedProcedure
@@ -137,6 +161,9 @@ export const pageRouter = createTRPCRouter({
         },
       });
 
+      // Invalidate workspace pages cache when a new page is created
+      await workspaceCache.delete(input.workspaceId.toString(), "pages");
+
       return page;
     }),
 
@@ -185,6 +212,9 @@ export const pageRouter = createTRPCRouter({
           },
         },
       });
+
+      // Invalidate page cache when updated
+      await invalidateCache.page(id, page.workspaceId.toString());
 
       return updatedPage;
     }),

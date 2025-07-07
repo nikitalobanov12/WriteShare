@@ -1,13 +1,29 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { 
+  userCache, 
+  workspaceCache, 
+  cacheOrFetch, 
+  invalidateCache,
+  generateCacheKey 
+} from "~/lib/cache";
+import { CACHE_TTL } from "~/server/redis";
 
 export const workspaceRouter = createTRPCRouter({
   getWorkspaces: protectedProcedure.query(async ({ ctx }) => {
-    const memberships = await ctx.db.workspaceMembership.findMany({
-      where: { userId: ctx.session.userId },
-      include: { workspace: true },
-    });
-    return memberships.map((m) => m.workspace);
+    const cacheKey = generateCacheKey("USER", ctx.session.userId, "workspaces");
+    
+    return await cacheOrFetch(
+      cacheKey,
+      async () => {
+        const memberships = await ctx.db.workspaceMembership.findMany({
+          where: { userId: ctx.session.userId },
+          include: { workspace: true },
+        });
+        return memberships.map((m) => m.workspace);
+      },
+      CACHE_TTL.LONG
+    );
   }),
 
   createWorkspace: protectedProcedure
@@ -22,6 +38,10 @@ export const workspaceRouter = createTRPCRouter({
           },
         },
       });
+
+      // Invalidate user's cached workspaces when a new workspace is created
+      await userCache.delete(ctx.session.userId, "workspaces");
+
       return workspace;
     }),
 
