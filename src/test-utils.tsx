@@ -1,29 +1,30 @@
-import { vi } from 'vitest';
-import { render, type RenderOptions } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SessionProvider } from 'next-auth/react';
-import { SidebarProvider } from '~/components/ui/sidebar';
-import React from 'react';
+import { vi } from "vitest";
+import { render, type RenderOptions } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SessionProvider } from "next-auth/react";
+import { SidebarProvider } from "~/components/ui/sidebar";
+import React from "react";
 
 // Common mock patterns for tRPC
-export const createMockTrpcApi = () => vi.hoisted(() => ({
-  workspace: {
-    getWorkspaces: {
-      useQuery: vi.fn(),
+export const createMockTrpcApi = () =>
+  vi.hoisted(() => ({
+    workspace: {
+      getWorkspaces: {
+        useQuery: vi.fn(),
+      },
+      createWorkspace: {
+        useMutation: vi.fn(),
+      },
+      inviteUser: {
+        useMutation: vi.fn(),
+      },
     },
-    createWorkspace: {
-      useMutation: vi.fn(),
-    },
-    inviteUser: {
-      useMutation: vi.fn(),
-    },
-  },
-  // Add more API endpoints as needed
-}));
+    // Add more API endpoints as needed
+  }));
 
 // Mock Next.js navigation
 export const mockNextNavigation = () => {
-  vi.mock('next/navigation', () => ({
+  vi.mock("next/navigation", () => ({
     useRouter: () => ({
       push: vi.fn(),
       replace: vi.fn(),
@@ -31,25 +32,29 @@ export const mockNextNavigation = () => {
       forward: vi.fn(),
       refresh: vi.fn(),
     }),
-    usePathname: () => '/',
+    usePathname: () => "/",
     useSearchParams: () => new URLSearchParams(),
   }));
 };
 
 // Mock NextAuth
-export const mockNextAuth = (userData = {
-  id: '1',
-  name: 'Test User',
-  email: 'test@example.com',
-  image: 'https://example.com/avatar.jpg',
-}) => {
-  vi.mock('next-auth/react', () => ({
+export const mockNextAuth = (
+  userData = {
+    id: "1",
+    name: "Test User",
+    email: "test@example.com",
+    image: "https://example.com/avatar.jpg",
+  },
+) => {
+  vi.mock("next-auth/react", () => ({
     useSession: () => ({
       data: {
         user: userData,
       },
     }),
-    SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SessionProvider: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
   }));
 };
 
@@ -59,19 +64,20 @@ interface TestWrapperProps {
   withSidebar?: boolean;
 }
 
-export const TestWrapper = ({ children, withSidebar = false }: TestWrapperProps) => {
+export const TestWrapper = ({
+  children,
+  withSidebar = false,
+}: TestWrapperProps) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
       mutations: { retry: false },
     },
   });
-  
+
   let content = (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider session={null}>
-        {children}
-      </SessionProvider>
+      <SessionProvider session={null}>{children}</SessionProvider>
     </QueryClientProvider>
   );
 
@@ -79,9 +85,7 @@ export const TestWrapper = ({ children, withSidebar = false }: TestWrapperProps)
     content = (
       <QueryClientProvider client={queryClient}>
         <SessionProvider session={null}>
-          <SidebarProvider>
-            {children}
-          </SidebarProvider>
+          <SidebarProvider>{children}</SidebarProvider>
         </SessionProvider>
       </QueryClientProvider>
     );
@@ -93,10 +97,10 @@ export const TestWrapper = ({ children, withSidebar = false }: TestWrapperProps)
 // Custom render function with providers
 export const renderWithProviders = (
   ui: React.ReactElement,
-  options?: RenderOptions & { withSidebar?: boolean }
+  options?: RenderOptions & { withSidebar?: boolean },
 ) => {
   const { withSidebar = false, ...renderOptions } = options ?? {};
-  
+
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <TestWrapper withSidebar={withSidebar}>{children}</TestWrapper>
   );
@@ -114,5 +118,5 @@ export const defaultMockWorkspace = {
 
 export const defaultMockMutation = {
   mutateAsync: vi.fn(),
-  status: 'idle' as const,
-}; 
+  status: "idle" as const,
+};

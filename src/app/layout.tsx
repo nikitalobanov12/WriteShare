@@ -25,8 +25,6 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
-  
-
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -44,16 +42,12 @@ export default async function RootLayout({
                 <SidebarProvider>
                   <NotionSidebar />
                   <SidebarInset>
-                    <main className="flex-1 overflow-auto">
-                      {children}
-                    </main>
+                    <main className="flex-1 overflow-auto">{children}</main>
                   </SidebarInset>
                 </SidebarProvider>
               ) : (
                 /* Show simple layout for unauthenticated users */
-                <main className="min-h-screen">
-                  {children}
-                </main>
+                <main className="min-h-screen">{children}</main>
               )}
             </TRPCReactProvider>
           </SessionProvider>

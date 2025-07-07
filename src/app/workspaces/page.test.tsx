@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-import WorkspacesPage from './page';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
+import WorkspacesPage from "./page";
 
 // Create hoisted mocks to avoid initialization issues
 const mockTrpcApi = vi.hoisted(() => ({
@@ -20,14 +20,14 @@ const mockTrpcApi = vi.hoisted(() => ({
 }));
 
 // Mock Next.js navigation
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
 }));
 
 // Mock the tRPC API
-vi.mock('~/trpc/react', () => ({
+vi.mock("~/trpc/react", () => ({
   api: mockTrpcApi,
 }));
 
@@ -38,20 +38,18 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
       mutations: { retry: false },
     },
   });
-  
+
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 };
 
-describe('WorkspacesPage', () => {
+describe("WorkspacesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders loading state', () => {
+  it("renders loading state", () => {
     mockTrpcApi.workspace.getWorkspaces.useQuery.mockReturnValue({
       data: [],
       isLoading: true,
@@ -60,22 +58,22 @@ describe('WorkspacesPage', () => {
     });
     mockTrpcApi.workspace.createWorkspace.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
     mockTrpcApi.workspace.inviteUser.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
 
     render(<WorkspacesPage />, { wrapper: TestWrapper });
-    
-    expect(screen.getByText('Loading workspaces...')).toBeInTheDocument();
+
+    expect(screen.getByText("Loading workspaces...")).toBeInTheDocument();
   });
 
-  it('renders workspaces when data is available', () => {
+  it("renders workspaces when data is available", () => {
     const mockWorkspaces = [
-      { id: 1, name: 'Test Workspace 1' },
-      { id: 2, name: 'Test Workspace 2' },
+      { id: 1, name: "Test Workspace 1" },
+      { id: 2, name: "Test Workspace 2" },
     ];
 
     mockTrpcApi.workspace.getWorkspaces.useQuery.mockReturnValue({
@@ -86,20 +84,20 @@ describe('WorkspacesPage', () => {
     });
     mockTrpcApi.workspace.createWorkspace.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
     mockTrpcApi.workspace.inviteUser.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
 
     render(<WorkspacesPage />, { wrapper: TestWrapper });
-    
-    expect(screen.getByText('Test Workspace 1')).toBeInTheDocument();
-    expect(screen.getByText('Test Workspace 2')).toBeInTheDocument();
+
+    expect(screen.getByText("Test Workspace 1")).toBeInTheDocument();
+    expect(screen.getByText("Test Workspace 2")).toBeInTheDocument();
   });
 
-  it('opens create workspace dialog when New Workspace button is clicked', async () => {
+  it("opens create workspace dialog when New Workspace button is clicked", async () => {
     mockTrpcApi.workspace.getWorkspaces.useQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -108,45 +106,45 @@ describe('WorkspacesPage', () => {
     });
     mockTrpcApi.workspace.createWorkspace.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
     mockTrpcApi.workspace.inviteUser.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
 
     render(<WorkspacesPage />, { wrapper: TestWrapper });
-    
-    const newWorkspaceButton = screen.getByText('New Workspace');
+
+    const newWorkspaceButton = screen.getByText("New Workspace");
     fireEvent.click(newWorkspaceButton);
-    
+
     await waitFor(() => {
-      expect(screen.getByText('Create New Workspace')).toBeInTheDocument();
+      expect(screen.getByText("Create New Workspace")).toBeInTheDocument();
     });
   });
 
-  it('displays error message when API call fails', () => {
+  it("displays error message when API call fails", () => {
     mockTrpcApi.workspace.getWorkspaces.useQuery.mockReturnValue({
       data: [],
       isLoading: false,
-      error: new Error('Failed to fetch workspaces'),
+      error: new Error("Failed to fetch workspaces"),
       refetch: vi.fn(),
     });
     mockTrpcApi.workspace.createWorkspace.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
     mockTrpcApi.workspace.inviteUser.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
 
     render(<WorkspacesPage />, { wrapper: TestWrapper });
-    
-    expect(screen.getByText('Failed to fetch workspaces')).toBeInTheDocument();
+
+    expect(screen.getByText("Failed to fetch workspaces")).toBeInTheDocument();
   });
 
-  it('shows empty state when no workspaces exist', () => {
+  it("shows empty state when no workspaces exist", () => {
     mockTrpcApi.workspace.getWorkspaces.useQuery.mockReturnValue({
       data: [],
       isLoading: false,
@@ -155,16 +153,18 @@ describe('WorkspacesPage', () => {
     });
     mockTrpcApi.workspace.createWorkspace.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
     mockTrpcApi.workspace.inviteUser.useMutation.mockReturnValue({
       mutateAsync: vi.fn(),
-      status: 'idle',
+      status: "idle",
     });
 
     render(<WorkspacesPage />, { wrapper: TestWrapper });
-    
-    expect(screen.getByText('No workspaces yet')).toBeInTheDocument();
-    expect(screen.getByText('Create your first workspace to get started')).toBeInTheDocument();
+
+    expect(screen.getByText("No workspaces yet")).toBeInTheDocument();
+    expect(
+      screen.getByText("Create your first workspace to get started"),
+    ).toBeInTheDocument();
   });
-}); 
+});

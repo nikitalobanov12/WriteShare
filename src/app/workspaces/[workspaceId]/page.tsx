@@ -6,7 +6,14 @@ import { api } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import { Label } from "~/components/ui/label";
 import { FileText, Plus, User, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -19,11 +26,15 @@ export default function WorkspaceDetailPage() {
   const [newPageEmoji, setNewPageEmoji] = useState("📄");
 
   const workspaceIdNum = Number(workspaceId);
-  
+
   // Get pages for this workspace
-  const { data: pages, isLoading, refetch } = api.page.getWorkspacePages.useQuery(
+  const {
+    data: pages,
+    isLoading,
+    refetch,
+  } = api.page.getWorkspacePages.useQuery(
     { workspaceId: workspaceIdNum },
-    { enabled: !!workspaceId }
+    { enabled: !!workspaceId },
   );
 
   // Create page mutation
@@ -38,12 +49,12 @@ export default function WorkspaceDetailPage() {
     },
     onError: (error) => {
       console.error("Error creating page:", error);
-    }
+    },
   });
 
   const handleCreatePage = async () => {
     if (!newPageTitle.trim()) return;
-    
+
     await createPageMutation.mutateAsync({
       title: newPageTitle.trim(),
       workspaceId: workspaceIdNum,
@@ -58,15 +69,15 @@ export default function WorkspaceDetailPage() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Workspace</h1>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="h-32 animate-pulse">
               <CardContent className="p-4">
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <div className="mb-2 h-4 rounded bg-gray-200"></div>
+                <div className="h-3 w-2/3 rounded bg-gray-200"></div>
               </CardContent>
             </Card>
           ))}
@@ -77,12 +88,12 @@ export default function WorkspaceDetailPage() {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Workspace Pages</h1>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               New Page
             </Button>
           </DialogTrigger>
@@ -128,7 +139,9 @@ export default function WorkspaceDetailPage() {
                 </Button>
                 <Button
                   onClick={handleCreatePage}
-                  disabled={!newPageTitle.trim() || createPageMutation.isPending}
+                  disabled={
+                    !newPageTitle.trim() || createPageMutation.isPending
+                  }
                 >
                   {createPageMutation.isPending ? "Creating..." : "Create Page"}
                 </Button>
@@ -139,23 +152,25 @@ export default function WorkspaceDetailPage() {
       </div>
 
       {!pages || pages.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No pages yet</h3>
-          <p className="text-gray-500 mb-6">
+        <div className="py-12 text-center">
+          <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+          <h3 className="mb-2 text-lg font-medium text-gray-900">
+            No pages yet
+          </h3>
+          <p className="mb-6 text-gray-500">
             Get started by creating your first page in this workspace.
           </p>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Create Your First Page
           </Button>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {pages.map((page) => (
-            <Card 
-              key={page.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer"
+            <Card
+              key={page.id}
+              className="cursor-pointer transition-shadow hover:shadow-md"
               onClick={() => handlePageClick(page.id)}
             >
               <CardHeader className="pb-3">
@@ -172,12 +187,17 @@ export default function WorkspaceDetailPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{formatDistanceToNow(new Date(page.createdAt), { addSuffix: true })}</span>
+                    <span>
+                      {formatDistanceToNow(new Date(page.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
                   </div>
                 </div>
                 {page.children && page.children.length > 0 && (
                   <div className="mt-3 text-sm text-gray-500">
-                    {page.children.length} subpage{page.children.length !== 1 ? "s" : ""}
+                    {page.children.length} subpage
+                    {page.children.length !== 1 ? "s" : ""}
                   </div>
                 )}
               </CardContent>

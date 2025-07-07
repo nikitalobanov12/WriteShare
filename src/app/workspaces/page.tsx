@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
-import { Card, CardHeader, CardTitle} from "~/components/ui/card";
+import { Card, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -32,12 +32,17 @@ interface Workspace {
 
 export default function WorkspacesPage() {
   const router = useRouter();
-  const { data: workspaces = [], isLoading, error, refetch } = api.workspace.getWorkspaces.useQuery();
-  const createWorkspace = api.workspace.createWorkspace.useMutation({ 
+  const {
+    data: workspaces = [],
+    isLoading,
+    error,
+    refetch,
+  } = api.workspace.getWorkspaces.useQuery();
+  const createWorkspace = api.workspace.createWorkspace.useMutation({
     onSuccess: () => void refetch(),
     onError: (error) => {
-      console.error('Failed to create workspace:', error);
-    }
+      console.error("Failed to create workspace:", error);
+    },
   });
   const inviteUser = api.workspace.inviteUser.useMutation({
     onSuccess: () => {
@@ -49,13 +54,15 @@ export default function WorkspacesPage() {
     onError: (error) => {
       setInviteError(error.message);
       setTimeout(() => setInviteError(""), 5000);
-    }
+    },
   });
 
   const [showCreate, setShowCreate] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [showRename, setShowRename] = useState(false);
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
+    null,
+  );
   const [email, setEmail] = useState("");
   const [wsName, setWsName] = useState("");
   const [newName, setNewName] = useState("");
@@ -69,7 +76,7 @@ export default function WorkspacesPage() {
         setWsName("");
         setShowCreate(false);
       } catch (error) {
-        console.error('Failed to create workspace:', error);
+        console.error("Failed to create workspace:", error);
       }
     }
   };
@@ -78,13 +85,13 @@ export default function WorkspacesPage() {
     if (currentWorkspace && email.trim()) {
       setInviteError("");
       try {
-        await inviteUser.mutateAsync({ 
-          workspaceId: currentWorkspace.id, 
-          email: email.trim() 
+        await inviteUser.mutateAsync({
+          workspaceId: currentWorkspace.id,
+          email: email.trim(),
         });
       } catch (error) {
         // Error handling is done in the mutation onError callback
-        console.error(error)
+        console.error(error);
       }
     }
   };
@@ -121,7 +128,7 @@ export default function WorkspacesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Your Workspaces</h1>
           <p className="text-muted-foreground mt-1">
@@ -148,7 +155,7 @@ export default function WorkspacesPage() {
                   onChange={(e) => setWsName(e.target.value)}
                   placeholder="Enter workspace name"
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && wsName.trim()) {
+                    if (e.key === "Enter" && wsName.trim()) {
                       void handleCreate();
                     }
                   }}
@@ -159,11 +166,15 @@ export default function WorkspacesPage() {
               <Button variant="outline" onClick={() => setShowCreate(false)}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={() => void handleCreate()}
-                disabled={createWorkspace.status === 'pending' || !wsName.trim()}
+                disabled={
+                  createWorkspace.status === "pending" || !wsName.trim()
+                }
               >
-                {createWorkspace.status === 'pending' ? 'Creating...' : 'Create Workspace'}
+                {createWorkspace.status === "pending"
+                  ? "Creating..."
+                  : "Create Workspace"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -172,50 +183,52 @@ export default function WorkspacesPage() {
 
       {/* Success Message */}
       {inviteSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+        <div className="rounded-md border border-green-200 bg-green-50 p-4">
           <p className="text-green-800">Invitation sent successfully!</p>
         </div>
       )}
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
+        <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Loading workspaces...</p>
+            <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
+            <p className="text-muted-foreground mt-2">Loading workspaces...</p>
           </div>
         </div>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="rounded-md border border-red-200 bg-red-50 p-4">
           <p className="text-red-800">
-            {error instanceof Error ? error.message : 'Failed to load workspaces'}
+            {error instanceof Error
+              ? error.message
+              : "Failed to load workspaces"}
           </p>
         </div>
       )}
 
       {/* Workspaces Grid */}
       {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {workspaces.map((workspace) => (
-            <Card 
-              key={workspace.id} 
-              className="group relative cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+            <Card
+              key={workspace.id}
+              className="group relative cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
               onClick={() => handleCardClick(workspace.id)}
             >
               <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="group-hover:text-primary text-lg font-semibold transition-colors">
                     {workspace.name}
                   </CardTitle>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                         onClick={(e) => {
                           e.stopPropagation();
                         }}
@@ -225,7 +238,7 @@ export default function WorkspacesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           openRenameDialog(workspace);
@@ -234,7 +247,7 @@ export default function WorkspacesPage() {
                         <Edit className="mr-2 h-4 w-4" />
                         Rename workspace
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           openInviteDialog(workspace);
@@ -244,7 +257,7 @@ export default function WorkspacesPage() {
                         Invite users
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           // TODO: Implement workspace settings
@@ -257,7 +270,6 @@ export default function WorkspacesPage() {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              
             </Card>
           ))}
         </div>
@@ -265,9 +277,9 @@ export default function WorkspacesPage() {
 
       {/* Empty State */}
       {!isLoading && !error && workspaces.length === 0 && (
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <div className="text-muted-foreground">
-            <p className="text-lg mb-2">No workspaces yet</p>
+            <p className="mb-2 text-lg">No workspaces yet</p>
             <p className="mb-4">Create your first workspace to get started</p>
             <Dialog open={showCreate} onOpenChange={setShowCreate}>
               <DialogTrigger asChild>
@@ -297,7 +309,7 @@ export default function WorkspacesPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && email.trim()) {
+                  if (e.key === "Enter" && email.trim()) {
                     void handleInvite();
                   }
                 }}
@@ -311,11 +323,13 @@ export default function WorkspacesPage() {
             <Button variant="outline" onClick={closeInviteDialog}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => void handleInvite()}
-              disabled={inviteUser.status === 'pending' || !email.trim()}
+              disabled={inviteUser.status === "pending" || !email.trim()}
             >
-              {inviteUser.status === 'pending' ? 'Sending...' : 'Send Invitation'}
+              {inviteUser.status === "pending"
+                ? "Sending..."
+                : "Send Invitation"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -326,9 +340,9 @@ export default function WorkspacesPage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Rename Workspace</DialogTitle>
-                          <DialogDescription>
-                Change the name of &ldquo;{currentWorkspace?.name}&rdquo;.
-              </DialogDescription>
+            <DialogDescription>
+              Change the name of &ldquo;{currentWorkspace?.name}&rdquo;.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -339,7 +353,7 @@ export default function WorkspacesPage() {
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Enter new workspace name"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newName.trim()) {
+                  if (e.key === "Enter" && newName.trim()) {
                     // TODO: Implement rename functionality
                     closeRenameDialog();
                   }
@@ -351,7 +365,7 @@ export default function WorkspacesPage() {
             <Button variant="outline" onClick={closeRenameDialog}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 // TODO: Implement rename functionality
                 closeRenameDialog();

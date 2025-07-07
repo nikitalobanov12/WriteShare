@@ -51,6 +51,37 @@ export const pageRouter = createTRPCRouter({
       return pages;
     }),
 
+  getPage: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const page = await ctx.db.page.findUnique({
+        where: { id: input.id },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+          workspace: {
+            include: {
+              memberships: {
+                where: { userId: ctx.session.userId },
+              },
+            },
+          },
+        },
+      });
+
+      if (!page || page.workspace.memberships.length === 0) {
+        throw new Error("Page not found or you don't have access");
+      }
+
+      return page;
+    }),
+
   createPage: protectedProcedure
     .input(
       z.object({
@@ -187,4 +218,4 @@ export const pageRouter = createTRPCRouter({
 
       return archivedPage;
     }),
-}); 
+});

@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { 
-  createMockTrpcApi, 
-  TestWrapper, 
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import React from "react";
+import {
+  createMockTrpcApi,
+  TestWrapper,
   renderWithProviders,
   defaultMockWorkspace,
-  defaultMockMutation
-} from './test-utils';
+  defaultMockMutation,
+} from "./test-utils";
 
 // Simple test component
 const TestComponent = () => <div>Test Component</div>;
@@ -21,45 +21,47 @@ const SidebarTestComponent = () => {
   );
 };
 
-describe('Test Utils', () => {
-  it('creates mock tRPC API with correct structure', () => {
+describe("Test Utils", () => {
+  it("creates mock tRPC API with correct structure", () => {
     const mockApi = createMockTrpcApi();
-    
-    expect(mockApi).toHaveProperty('workspace');
-    expect(mockApi.workspace).toHaveProperty('getWorkspaces');
-    expect(mockApi.workspace).toHaveProperty('createWorkspace');
-    expect(mockApi.workspace).toHaveProperty('inviteUser');
+
+    expect(mockApi).toHaveProperty("workspace");
+    expect(mockApi.workspace).toHaveProperty("getWorkspaces");
+    expect(mockApi.workspace).toHaveProperty("createWorkspace");
+    expect(mockApi.workspace).toHaveProperty("inviteUser");
   });
 
-  it('renders component with TestWrapper', () => {
+  it("renders component with TestWrapper", () => {
     render(<TestComponent />, { wrapper: TestWrapper });
-    
-    expect(screen.getByText('Test Component')).toBeInTheDocument();
+
+    expect(screen.getByText("Test Component")).toBeInTheDocument();
   });
 
-  it('renders component with sidebar provider', () => {
-    const WrapperWithSidebar = ({ children }: { children: React.ReactNode }) => (
-      <TestWrapper withSidebar={true}>{children}</TestWrapper>
-    );
-    
+  it("renders component with sidebar provider", () => {
+    const WrapperWithSidebar = ({
+      children,
+    }: {
+      children: React.ReactNode;
+    }) => <TestWrapper withSidebar={true}>{children}</TestWrapper>;
+
     render(<SidebarTestComponent />, { wrapper: WrapperWithSidebar });
-    
-    expect(screen.getByText('Sidebar Test Component')).toBeInTheDocument();
+
+    expect(screen.getByText("Sidebar Test Component")).toBeInTheDocument();
   });
 
-  it('renders component using renderWithProviders', () => {
+  it("renders component using renderWithProviders", () => {
     renderWithProviders(<TestComponent />);
-    
-    expect(screen.getByText('Test Component')).toBeInTheDocument();
+
+    expect(screen.getByText("Test Component")).toBeInTheDocument();
   });
 
-  it('renders component with sidebar using renderWithProviders', () => {
+  it("renders component with sidebar using renderWithProviders", () => {
     renderWithProviders(<SidebarTestComponent />, { withSidebar: true });
-    
-    expect(screen.getByText('Sidebar Test Component')).toBeInTheDocument();
+
+    expect(screen.getByText("Sidebar Test Component")).toBeInTheDocument();
   });
 
-  it('provides default mock values', () => {
+  it("provides default mock values", () => {
     expect(defaultMockWorkspace).toEqual({
       data: [],
       isLoading: false,
@@ -69,12 +71,12 @@ describe('Test Utils', () => {
 
     expect(defaultMockMutation).toEqual({
       mutateAsync: expect.any(Function) as unknown,
-      status: 'idle',
+      status: "idle",
     });
   });
 
-  it('default mock functions are vitest mocks', () => {
+  it("default mock functions are vitest mocks", () => {
     expect(vi.isMockFunction(defaultMockWorkspace.refetch)).toBe(true);
     expect(vi.isMockFunction(defaultMockMutation.mutateAsync)).toBe(true);
   });
-}); 
+});

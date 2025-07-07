@@ -3,7 +3,15 @@
 import * as React from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronRight, Plus, Home, Settings, Users, FileText, Search } from "lucide-react";
+import {
+  ChevronRight,
+  Plus,
+  Home,
+  Settings,
+  Users,
+  FileText,
+  Search,
+} from "lucide-react";
 import { api } from "~/trpc/react";
 
 import {
@@ -43,7 +51,9 @@ interface Workspace {
   name: string;
 }
 
-export function NotionSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function NotionSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -81,7 +91,7 @@ export function NotionSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader className="border-b border-border">
+      <SidebarHeader className="border-border border-b">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold">Notion Clone</h1>
@@ -90,11 +100,11 @@ export function NotionSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
             <ModeToggle />
           </div>
         </div>
-        
+
         {/* Search Bar */}
         <div className="px-4 pb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder="Search..."
               value={searchQuery}
@@ -168,14 +178,20 @@ export function NotionSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border">
+      <SidebarFooter className="border-border border-t">
         {session?.user && (
           <div className="p-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-2 p-2">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2 p-2"
+                >
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={session.user.image ?? ""} alt={session.user.name ?? ""} />
+                    <AvatarImage
+                      src={session.user.image ?? ""}
+                      alt={session.user.name ?? ""}
+                    />
                     <AvatarFallback>
                       {session.user.name?.charAt(0) ?? "U"}
                     </AvatarFallback>
@@ -201,19 +217,19 @@ export function NotionSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
           </div>
         )}
       </SidebarFooter>
-      
+
       <SidebarRail />
     </Sidebar>
   );
 }
 
-function WorkspaceItem({ 
-  workspace, 
-  onClick, 
-  isActive 
-}: { 
-  workspace: Workspace; 
-  onClick: () => void; 
+function WorkspaceItem({
+  workspace,
+  onClick,
+  isActive,
+}: {
+  workspace: Workspace;
+  onClick: () => void;
   isActive: boolean;
 }) {
   const router = useRouter();
@@ -223,14 +239,14 @@ function WorkspaceItem({
   // Get pages for this workspace
   const { data: pages = [] } = api.page.getWorkspacePages.useQuery(
     { workspaceId: workspace.id },
-    { 
+    {
       enabled: isOpen, // Only fetch when expanded
       refetchOnWindowFocus: false,
-    }
+    },
   );
 
   // Filter top-level pages (pages without a parent)
-  const topLevelPages = pages.filter(page => !page.parentId);
+  const topLevelPages = pages.filter((page) => !page.parentId);
 
   React.useEffect(() => {
     if (isActive) {
@@ -251,7 +267,7 @@ function WorkspaceItem({
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
-            className="w-full justify-start group/workspace"
+            className="group/workspace w-full justify-start"
             isActive={isActive && pathname === `/workspaces/${workspace.id}`}
           >
             <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]/workspace:rotate-90" />
@@ -264,18 +280,22 @@ function WorkspaceItem({
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={onClick}
-                isActive={isActive && pathname === `/workspaces/${workspace.id}`}
+                isActive={
+                  isActive && pathname === `/workspaces/${workspace.id}`
+                }
                 className="w-full justify-start"
               >
                 <FileText className="h-4 w-4" />
                 Overview
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
+
             {/* Pages Section */}
             <SidebarMenuItem>
               <div className="flex items-center justify-between px-2 py-1">
-                <span className="text-xs font-medium text-muted-foreground">Pages</span>
+                <span className="text-muted-foreground text-xs font-medium">
+                  Pages
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -293,7 +313,7 @@ function WorkspaceItem({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={handleCreatePage}
-                  className="w-full justify-start text-muted-foreground text-xs"
+                  className="text-muted-foreground w-full justify-start text-xs"
                 >
                   <Plus className="h-3 w-3" />
                   Create your first page
@@ -334,13 +354,18 @@ interface PageTreeItemProps {
   onPageClick: (pageId: string) => void;
 }
 
-function PageTreeItem({ page, pages, workspaceId, onPageClick }: PageTreeItemProps) {
+function PageTreeItem({
+  page,
+  pages,
+  workspaceId,
+  onPageClick,
+}: PageTreeItemProps) {
   const pathname = usePathname();
-  const currentPageId = pathname.split('/').pop();
-  
+  const currentPageId = pathname.split("/").pop();
+
   // Get child pages for this page
-  const childPages = pages.filter(p => p.parentId === page.id);
-  
+  const childPages = pages.filter((p) => p.parentId === page.id);
+
   const isActive = currentPageId === page.id;
 
   if (childPages.length === 0) {
@@ -349,9 +374,9 @@ function PageTreeItem({ page, pages, workspaceId, onPageClick }: PageTreeItemPro
         <SidebarMenuButton
           isActive={isActive}
           onClick={() => onPageClick(page.id)}
-          className="w-full justify-start text-xs pl-8"
+          className="w-full justify-start pl-8 text-xs"
         >
-          <span className="text-xs mr-1">{page.emoji ?? "📄"}</span>
+          <span className="mr-1 text-xs">{page.emoji ?? "📄"}</span>
           <span className="truncate">{page.title}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -362,16 +387,18 @@ function PageTreeItem({ page, pages, workspaceId, onPageClick }: PageTreeItemPro
     <SidebarMenuItem>
       <Collapsible
         className="group/page-collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
-        defaultOpen={isActive || childPages.some(child => child.id === currentPageId)}
+        defaultOpen={
+          isActive || childPages.some((child) => child.id === currentPageId)
+        }
       >
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
             isActive={isActive}
             onClick={() => onPageClick(page.id)}
-            className="w-full justify-start text-xs pl-8"
+            className="w-full justify-start pl-8 text-xs"
           >
             <ChevronRight className="h-3 w-3 transition-transform" />
-            <span className="text-xs mr-1">{page.emoji ?? "📄"}</span>
+            <span className="mr-1 text-xs">{page.emoji ?? "📄"}</span>
             <span className="truncate">{page.title}</span>
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -391,4 +418,4 @@ function PageTreeItem({ page, pages, workspaceId, onPageClick }: PageTreeItemPro
       </Collapsible>
     </SidebarMenuItem>
   );
-} 
+}
