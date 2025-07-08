@@ -5,7 +5,6 @@ import WorkspacesPage from "./workspaces/page";
 export default async function Home() {
   const session = await auth();
 
-  // Redirect to login if not authenticated
   if (!session?.user) {
     redirect("/login");
   }

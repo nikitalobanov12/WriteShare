@@ -33,7 +33,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
   }
 
   return (
-    <div className="border-b border-zinc-200 dark:border-zinc-700 p-2 flex flex-wrap items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1 border-b border-zinc-200 p-2 dark:border-zinc-700">
       {/* Text Formatting */}
       <Button
         variant={editor.isActive("bold") ? "default" : "ghost"}
@@ -43,7 +43,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Bold className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("italic") ? "default" : "ghost"}
         size="sm"
@@ -52,7 +52,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Italic className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("strike") ? "default" : "ghost"}
         size="sm"
@@ -61,7 +61,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Strikethrough className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("code") ? "default" : "ghost"}
         size="sm"
@@ -70,7 +70,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Code className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("highlight") ? "default" : "ghost"}
         size="sm"
@@ -89,7 +89,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Heading1 className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("heading", { level: 2 }) ? "default" : "ghost"}
         size="sm"
@@ -97,7 +97,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Heading2 className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("heading", { level: 3 }) ? "default" : "ghost"}
         size="sm"
@@ -116,7 +116,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <List className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("orderedList") ? "default" : "ghost"}
         size="sm"
@@ -124,7 +124,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <ListOrdered className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant={editor.isActive("taskList") ? "default" : "ghost"}
         size="sm"
@@ -143,7 +143,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Quote className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -168,7 +168,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Table className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -181,7 +181,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Link className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -192,7 +192,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
           }
         }}
       >
-        <Image   className="h-4 w-4" />
+        <Image className="h-4 w-4" role="image" aria-label="image" />
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
@@ -206,7 +206,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       >
         <Undo className="h-4 w-4" />
       </Button>
-      
+
       <Button
         variant="ghost"
         size="sm"
@@ -217,4 +217,4 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       </Button>
     </div>
   );
-} 
+}

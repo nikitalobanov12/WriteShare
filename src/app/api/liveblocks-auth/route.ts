@@ -14,28 +14,24 @@ const liveblocks = new Liveblocks({
 });
 
 export async function POST(request: NextRequest) {
-  // Get the current user session
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { room } = await request.json() as {
+  const { room } = (await request.json()) as {
     room: string;
   };
 
-  // Extract page ID from room name (format: "page-{pageId}")
   const pageId = room.replace("page-", "");
 
-  // Check if user has access to this page
   const userCanAccess = await canUserAccessRoom(session.user.id, pageId);
 
   if (!userCanAccess) {
     return new Response("Access denied", { status: 403 });
   }
 
-  // Create a session for the current user
   const liveblocksSession = liveblocks.prepareSession(session.user.id, {
     userInfo: {
       name: session.user.name ?? "Anonymous",
@@ -44,18 +40,17 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // Give the user access to the room
   liveblocksSession.allow(room, liveblocksSession.FULL_ACCESS);
 
-  // Authorize the user and return the result
   const { status, body } = await liveblocksSession.authorize();
   return new Response(body, { status });
 }
 
-// Helper function to check if user can access page
-async function canUserAccessRoom(userId: string, pageId: string): Promise<boolean> {
+async function canUserAccessRoom(
+  userId: string,
+  pageId: string,
+): Promise<boolean> {
   try {
-    // Get the page and check if user has access through workspace membership
     const page = await db.page.findFirst({
       where: {
         id: pageId,
@@ -73,7 +68,6 @@ async function canUserAccessRoom(userId: string, pageId: string): Promise<boolea
       },
     });
 
-    // User can access if they are a member of the workspace that owns this page
     return !!(page && page.workspace.memberships.length > 0);
   } catch (error) {
     console.error("Error checking page access:", error);
@@ -81,12 +75,22 @@ async function canUserAccessRoom(userId: string, pageId: string): Promise<boolea
   }
 }
 
-// Generate a random color for user avatars
 function generateRandomColor(): string {
   const colors = [
-    "#DC2626", "#EA580C", "#D97706", "#CA8A04", "#65A30D",
-    "#16A34A", "#059669", "#0891B2", "#0284C7", "#2563EB",
-    "#7C3AED", "#C026D3", "#DC2626", "#BE185D"
+    "#DC2626",
+    "#EA580C",
+    "#D97706",
+    "#CA8A04",
+    "#65A30D",
+    "#16A34A",
+    "#059669",
+    "#0891B2",
+    "#0284C7",
+    "#2563EB",
+    "#7C3AED",
+    "#C026D3",
+    "#DC2626",
+    "#BE185D",
   ] as const;
   return colors[Math.floor(Math.random() * colors.length)]!;
 }

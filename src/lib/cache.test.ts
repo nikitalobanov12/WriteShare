@@ -1,12 +1,20 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
-import { 
-  generateCacheKey, 
-  getCached, 
-  setCached, 
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  vi,
+} from "vitest";
+import {
+  generateCacheKey,
+  getCached,
+  setCached,
   deleteCached,
   cacheOrFetch,
   userCache,
-  postCache 
+  postCache,
 } from "./cache";
 import { redis, closeRedis } from "~/server/redis";
 
@@ -43,7 +51,7 @@ describe("Cache Utilities", () => {
     it("should generate consistent cache keys", () => {
       const key1 = generateCacheKey("USER", "123");
       const key2 = generateCacheKey("USER", "123", "posts");
-      
+
       expect(key1).toBe("user:123");
       expect(key2).toBe("user:123:posts");
     });
@@ -69,8 +77,11 @@ describe("Cache Utilities", () => {
       const key = "test:complex";
       const value = {
         user: { id: 1, name: "John" },
-        posts: [{ id: 1, title: "Post 1" }, { id: 2, title: "Post 2" }],
-        metadata: { created: new Date().toISOString() }
+        posts: [
+          { id: 1, title: "Post 1" },
+          { id: 2, title: "Post 2" },
+        ],
+        metadata: { created: new Date().toISOString() },
       };
 
       await setCached(key, value);
@@ -133,7 +144,11 @@ describe("Cache Utilities", () => {
   describe("userCache", () => {
     it("should manage user-specific cache", async () => {
       const userId = "user123";
-      const userData = { id: userId, name: "John Doe", email: "john@example.com" };
+      const userData = {
+        id: userId,
+        name: "John Doe",
+        email: "john@example.com",
+      };
 
       await userCache.set(userId, userData);
       const retrieved = await userCache.get<typeof userData>(userId);
@@ -143,7 +158,10 @@ describe("Cache Utilities", () => {
 
     it("should handle user cache with suffixes", async () => {
       const userId = "user456";
-      const userPosts = [{ id: 1, title: "Post 1" }, { id: 2, title: "Post 2" }];
+      const userPosts = [
+        { id: 1, title: "Post 1" },
+        { id: 2, title: "Post 2" },
+      ];
 
       await userCache.set(userId, userPosts, 300, "posts");
       const retrieved = await userCache.get<typeof userPosts>(userId, "posts");
@@ -167,7 +185,11 @@ describe("Cache Utilities", () => {
   describe("postCache", () => {
     it("should manage post-specific cache", async () => {
       const postId = 123;
-      const postData = { id: postId, title: "Test Post", content: "Test content" };
+      const postData = {
+        id: postId,
+        title: "Test Post",
+        content: "Test content",
+      };
 
       await postCache.set(postId, postData);
       const retrieved = await postCache.get<typeof postData>(postId);
@@ -185,4 +207,4 @@ describe("Cache Utilities", () => {
       expect(retrieved).toEqual(postData);
     });
   });
-}); 
+});

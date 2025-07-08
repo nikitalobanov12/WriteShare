@@ -1,6 +1,9 @@
 "use client";
 
-import { useLiveblocksExtension, FloatingToolbar } from "@liveblocks/react-tiptap";
+import {
+  useLiveblocksExtension,
+  FloatingToolbar,
+} from "@liveblocks/react-tiptap";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Table from "@tiptap/extension-table";
@@ -20,79 +23,122 @@ import { Threads } from "./threads";
 import { EditorToolbar } from "./editor-toolbar";
 import { useOnline } from "~/hooks/use-online";
 import { Wifi, WifiOff } from "lucide-react";
+import * as Y from "yjs";
+import { useEffect, useRef } from "react";
+import { throttle } from "lodash-es";
+
+interface WindowWithApi extends Window {
+  api?: {
+    page?: {
+      updatePageCrdt?: {
+        mutate: (args: { id: string; crdtState: string }) => void;
+      };
+    };
+  };
+}
 
 const lowlight = createLowlight(common);
 
 interface CollaborativeEditorProps {
   initialContent?: string;
   placeholder?: string;
-  onUpdate?: (content: string) => void;
+  crdtState?: string; // base64 string from backend
+  pageId?: string;
 }
 
 export function CollaborativeEditor({
   initialContent = "",
-  onUpdate,
+  placeholder,
+  crdtState,
+  pageId,
 }: CollaborativeEditorProps) {
   const others = useOthers();
   const liveblocks = useLiveblocksExtension();
   const isOnline = useOnline();
 
+  // Yjs doc setup (lazy initialization)
+  const ydocRef = useRef<Y.Doc | null>(null);
+  if (!ydocRef.current) {
+    ydocRef.current = new Y.Doc();
+    if (crdtState) {
+      try {
+        const update = Uint8Array.from(atob(crdtState), (c) => c.charCodeAt(0));
+        Y.applyUpdate(ydocRef.current, update);
+      } catch (e) {
+        // ignore corrupt state
+        console.error(e);
+      }
+    }
+  }
+  const ydoc = ydocRef.current;
+
+  // TipTap editor
   const editor = useEditor({
     extensions: [
       liveblocks,
       StarterKit.configure({
-        // The Liveblocks extension comes with its own history handling
         history: false,
-        // We'll use our custom code block extension
         codeBlock: false,
       }),
-      Table.configure({
-        resizable: true,
-      }),
+      Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
       TableCell,
-      CodeBlockLowlight.configure({
-        lowlight,
-      }),
-      Highlight.configure({
-        multicolor: true,
-      }),
+      CodeBlockLowlight.configure({ lowlight }),
+      Highlight.configure({ multicolor: true }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-500 underline cursor-pointer",
-        },
+        HTMLAttributes: { class: "text-blue-500 underline cursor-pointer" },
       }),
       Image.configure({
-        HTMLAttributes: {
-          class: "max-w-full h-auto rounded-lg",
-        },
+        HTMLAttributes: { class: "max-w-full h-auto rounded-lg" },
       }),
-      TaskList.configure({
-        HTMLAttributes: {
-          class: "not-prose pl-2",
-        },
-      }),
+      TaskList.configure({ HTMLAttributes: { class: "not-prose pl-2" } }),
       TaskItem.configure({
-        HTMLAttributes: {
-          class: "flex items-start my-4",
-        },
+        HTMLAttributes: { class: "flex items-start my-4" },
         nested: true,
       }),
     ],
     content: initialContent,
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      onUpdate?.(html);
-    },
     editorProps: {
       attributes: {
-        class: "prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-4 max-w-none",
+        class:
+          "prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-4 max-w-none",
       },
     },
     immediatelyRender: false,
   });
+
+  // Throttle save to backend
+  useEffect(() => {
+    if (!pageId || !ydoc) return;
+    const save = throttle(
+      (
+        update: Uint8Array,
+        _origin: unknown,
+        _doc: Y.Doc,
+        _transaction: Y.Transaction,
+      ) => {
+        const base64 = btoa(String.fromCharCode(...update));
+        if (
+          typeof window !== "undefined" &&
+          (window as WindowWithApi).api?.page?.updatePageCrdt?.mutate &&
+          pageId
+        ) {
+          const mutate = (window as WindowWithApi).api?.page?.updatePageCrdt
+            ?.mutate;
+          if (mutate) {
+            mutate({ id: pageId, crdtState: base64 });
+          }
+        }
+      },
+      10000,
+    );
+    ydoc.on("update", save);
+    return () => {
+      ydoc.off("update", save);
+    };
+  }, [pageId, ydoc]);
 
   // Show loading skeleton while connecting
   if (!editor) {
@@ -129,38 +175,41 @@ export function CollaborativeEditor({
         {/* Connected users */}
         {others.length > 0 && (
           <div className="flex items-center gap-2">
-          <div className="flex -space-x-2">
-            {others.slice(0, 3).map((other) => (
-              <div
-                key={other.connectionId}
-                className="h-6 w-6 rounded-full border-2 border-white dark:border-zinc-800 flex items-center justify-center text-xs text-white font-medium"
-                style={{ backgroundColor: other.info?.color || "#DC2626" }}
-                title={other.info?.name || "Anonymous"}
-              >
-                {(other.info?.name || "A").charAt(0).toUpperCase()}
-              </div>
-            ))}
-            {others.length > 3 && (
-              <div className="h-6 w-6 rounded-full border-2 border-white dark:border-zinc-800 bg-gray-500 flex items-center justify-center text-xs text-white font-medium">
-                +{others.length - 3}
-              </div>
-            )}
-          </div>
-          <span>{others.length} other{others.length !== 1 ? "s" : ""} editing</span>
+            <div className="flex -space-x-2">
+              {others.slice(0, 3).map((other) => (
+                <div
+                  key={other.connectionId}
+                  className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-xs font-medium text-white dark:border-zinc-800"
+                  style={{ backgroundColor: other.info?.color || "#DC2626" }}
+                  title={other.info?.name || "Anonymous"}
+                >
+                  {(other.info?.name || "A").charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {others.length > 3 && (
+                <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gray-500 text-xs font-medium text-white dark:border-zinc-800">
+                  +{others.length - 3}
+                </div>
+              )}
+            </div>
+            <span>
+              {others.length} other{others.length !== 1 ? "s" : ""} editing
+            </span>
           </div>
         )}
       </div>
 
       {/* Editor */}
-      <div className="min-h-[500px] rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+      <div className="min-h-[500px] rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
         <EditorToolbar editor={editor} />
-        <EditorContent 
-          editor={editor} 
-          className="prose prose-sm sm:prose-base max-w-none dark:prose-invert focus:outline-none p-4"
+        <EditorContent
+          editor={editor}
+          placeholder={placeholder}
+          className="prose prose-sm sm:prose-base dark:prose-invert max-w-none p-4 focus:outline-none"
         />
         <Threads editor={editor} />
         <FloatingToolbar editor={editor} />
       </div>
     </div>
   );
-} 
+}

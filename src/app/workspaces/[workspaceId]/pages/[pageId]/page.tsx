@@ -16,11 +16,10 @@ export default function PageDetailPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [emoji, setEmoji] = useState("");
-  const [content, setContent] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Debounce the content to avoid too many API calls
-  const debouncedContent = useDebounce(content, 1000);
+  // Debounce the title and emoji to avoid too many API calls
   const debouncedTitle = useDebounce(title, 500);
   const debouncedEmoji = useDebounce(emoji, 500);
 
@@ -33,7 +32,7 @@ export default function PageDetailPage() {
     error: fetchError,
   } = api.page.getPage.useQuery({ id: pageIdString }, { enabled: !!pageId });
 
-  // Update page mutation
+  // Update page mutation (for title/emoji only)
   const updatePageMutation = api.page.updatePage.useMutation({
     onSuccess: () => {
       setLastSaved(new Date());
@@ -47,25 +46,22 @@ export default function PageDetailPage() {
   const lastSavedRef = useRef({
     title: "",
     emoji: "",
-    content: "",
   });
 
   // Initialize state when page data loads
   useEffect(() => {
-    if (page) {
+    if (page && !hasInitialized) {
       setTitle(page.title);
       setEmoji(page.emoji ?? "");
-      setContent(page.content ?? "");
-      // Update lastSavedRef when page loads
       lastSavedRef.current = {
         title: page.title,
         emoji: page.emoji ?? "",
-        content: page.content ?? "",
       };
+      setHasInitialized(true);
     }
-  }, [page]);
+  }, [page, hasInitialized]);
 
-  // Auto-save when content changes, only if values differ from last saved
+  // Auto-save when title/emoji changes, only if values differ from last saved
   useEffect(() => {
     if (!page) return;
 
@@ -73,23 +69,20 @@ export default function PageDetailPage() {
       id: pageIdString,
       title: debouncedTitle ?? "Untitled",
       emoji: debouncedEmoji,
-      content: debouncedContent,
     };
 
     const last = lastSavedRef.current;
     const hasChanges =
       current.title !== last.title ||
-      current.emoji !== last.emoji ||
-      current.content !== last.content;
+      current.emoji !== last.emoji;
 
-    if (hasChanges && (current.title || current.content || current.emoji)) {
+    if (hasChanges && (current.title || current.emoji)) {
       updatePageMutation.mutate(current, {
         onSuccess: () => {
           setLastSaved(new Date());
           lastSavedRef.current = {
             title: current.title,
             emoji: current.emoji,
-            content: current.content,
           };
         },
         onError: (err) => {
@@ -97,7 +90,13 @@ export default function PageDetailPage() {
         },
       });
     }
-  }, [debouncedTitle, debouncedEmoji, debouncedContent, page, pageIdString, updatePageMutation]);
+  }, [
+    debouncedTitle,
+    debouncedEmoji,
+    page,
+    pageIdString,
+    updatePageMutation,
+  ]);
 
   const handleBack = () => {
     router.push(`/workspaces/${String(workspaceId)}`);
@@ -134,7 +133,9 @@ export default function PageDetailPage() {
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-zinc-900">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-          <h2 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Page not found</h2>
+          <h2 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+            Page not found
+          </h2>
           <p className="mb-4 text-gray-600 dark:text-zinc-400">
             The page you&apos;re looking for doesn&apos;t exist or you
             don&apos;t have access to it.
@@ -149,6 +150,12 @@ export default function PageDetailPage() {
   }
 
   const roomId = `page-${pageIdString}`;
+
+  // Debug: log CollaborativeEditor props before rendering
+  console.log('[Render] CollaborativeEditor props:', {
+    crdtState: page?.crdtState,
+    pageId: pageIdString,
+  });
 
   return (
     <Room roomId={roomId}>
@@ -190,7 +197,7 @@ export default function PageDetailPage() {
                   value={emoji}
                   onChange={(e) => setEmoji(e.target.value)}
                   placeholder="📄"
-                  className="h-12 w-16 border-none p-0 text-center text-2xl shadow-none focus:ring-0 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
+                  className="h-12 w-16 border-none bg-white p-0 text-center text-2xl text-zinc-900 shadow-none placeholder:text-gray-400 focus:ring-0 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                   maxLength={2}
                 />
                 <Input
@@ -198,7 +205,7 @@ export default function PageDetailPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={handleTitleKeyDown}
                   placeholder="Untitled"
-                  className="h-12 border-none p-0 text-4xl font-bold shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-400 focus:ring-0 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
+                  className="h-12 border-none bg-white p-0 text-4xl font-bold text-zinc-900 shadow-none placeholder:text-gray-400 focus:ring-0 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                 />
               </div>
             </div>
@@ -206,14 +213,20 @@ export default function PageDetailPage() {
             {/* Collaborative Content Editor */}
             <div className="space-y-2">
               <CollaborativeEditor
-                initialContent={content}
+                key={pageIdString}
+                crdtState={
+                  page?.crdtState
+                    ? btoa(
+                        String.fromCharCode(...new Uint8Array(page.crdtState)),
+                      )
+                    : undefined
+                }
+                pageId={pageIdString}
                 placeholder="Start writing your page content here... You can format text, add lists, and collaborate in real-time!"
-                onUpdate={(newContent) => {
-                  setContent(newContent);
-                }}
               />
               <p className="text-xs text-gray-500 dark:text-zinc-400">
-                💡 Tip: This is a collaborative editor. Multiple people can edit simultaneously!
+                💡 Tip: This is a collaborative editor. Multiple people can edit
+                simultaneously!
               </p>
             </div>
           </div>

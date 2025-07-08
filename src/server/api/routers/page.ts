@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { 
-  workspaceCache, 
-  pageCache, 
-  cacheOrFetch, 
+import {
+  workspaceCache,
+  cacheOrFetch,
   invalidateCache,
-  generateCacheKey 
+  generateCacheKey,
 } from "~/lib/cache";
 import { CACHE_TTL } from "~/server/redis";
 
@@ -27,8 +26,12 @@ export const pageRouter = createTRPCRouter({
         throw new Error("You don't have access to this workspace");
       }
 
-      const cacheKey = generateCacheKey("WORKSPACE", input.workspaceId, "pages");
-      
+      const cacheKey = generateCacheKey(
+        "WORKSPACE",
+        input.workspaceId,
+        "pages",
+      );
+
       return await cacheOrFetch(
         cacheKey,
         async () => {
@@ -63,7 +66,7 @@ export const pageRouter = createTRPCRouter({
 
           return pages;
         },
-        CACHE_TTL.MEDIUM
+        CACHE_TTL.MEDIUM,
       );
     }),
 
@@ -71,13 +74,18 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const cacheKey = generateCacheKey("PAGE", input.id, "details");
-      
+
       return await cacheOrFetch(
         cacheKey,
         async () => {
           const page = await ctx.db.page.findUnique({
             where: { id: input.id },
-            include: {
+            select: {
+              id: true,
+              title: true,
+              emoji: true,
+              content: true,
+              crdtState: true,
               author: {
                 select: {
                   id: true,
@@ -87,22 +95,24 @@ export const pageRouter = createTRPCRouter({
                 },
               },
               workspace: {
-                include: {
+                select: {
+                  id: true,
                   memberships: {
                     where: { userId: ctx.session.userId },
+                    select: { userId: true },
                   },
                 },
               },
             },
           });
 
-          if (!page || page.workspace.memberships.length === 0) {
+          if (!page?.workspace?.memberships?.length) {
             throw new Error("Page not found or you don't have access");
           }
 
           return page;
         },
-        CACHE_TTL.MEDIUM
+        CACHE_TTL.MEDIUM,
       );
     }),
 
@@ -216,6 +226,35 @@ export const pageRouter = createTRPCRouter({
       // Invalidate page cache when updated
       await invalidateCache.page(id, page.workspaceId.toString());
 
+      return updatedPage;
+    }),
+
+  updatePageCrdt: protectedProcedure
+    .input(z.object({ id: z.string(), crdtState: z.string() })) // base64 string
+    .mutation(async ({ ctx, input }) => {
+      // Verify the page exists and user has access
+      const page = await ctx.db.page.findUnique({
+        where: { id: input.id },
+        include: {
+          workspace: {
+            include: {
+              memberships: {
+                where: { userId: ctx.session.userId },
+              },
+            },
+          },
+        },
+      });
+      if (!page || page.workspace.memberships.length === 0) {
+        throw new Error("Page not found or you don't have access");
+      }
+      // Decode base64 to Buffer
+      const crdtBuffer = Buffer.from(input.crdtState, "base64");
+      const updatedPage = await ctx.db.page.update({
+        where: { id: input.id },
+        data: { crdtState: crdtBuffer },
+      });
+      await invalidateCache.page(input.id, page.workspaceId.toString());
       return updatedPage;
     }),
 

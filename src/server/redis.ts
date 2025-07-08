@@ -1,6 +1,5 @@
 import { createClient } from "redis";
 
-
 import { env } from "~/env";
 
 const createRedisClient = () => {
@@ -76,7 +75,7 @@ export const redisHealthCheck = async (): Promise<boolean> => {
 // Cache key prefixes for organization
 export const CACHE_KEYS = {
   USER: "user",
-  POST: "post", 
+  POST: "post",
   WORKSPACE: "workspace",
   PAGE: "page",
   SESSION: "session",
@@ -88,4 +87,4 @@ export const CACHE_TTL = {
   MEDIUM: 300, // 5 minutes
   LONG: 3600, // 1 hour
   VERY_LONG: 86400, // 24 hours
-} as const; 
+} as const;

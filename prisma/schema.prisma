@@ -113,7 +113,7 @@ model WorkspaceInvite {
 }
 
 model Page {
-    id          String    @id @default(cuid())
+    id          String    @id @default(uuid())
     title       String
     content     String?   @db.Text
     emoji       String?
@@ -126,6 +126,7 @@ model Page {
     authorId    String
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt
+    crdtState   Bytes?
 
     // Self-referential relation for nested pages
     parent      Page?     @relation("PageToPage", fields: [parentId], references: [id], onDelete: Cascade)

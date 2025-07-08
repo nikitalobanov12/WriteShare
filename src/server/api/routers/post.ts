@@ -6,13 +6,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { getUserPosts } from "~/lib/dal";
-import { 
-  userCache, 
-  postCache, 
-  cacheOrFetch, 
-  invalidateCache,
-  generateCacheKey 
-} from "~/lib/cache";
+import { cacheOrFetch, invalidateCache, generateCacheKey } from "~/lib/cache";
 import { CACHE_TTL } from "~/server/redis";
 
 export const postRouter = createTRPCRouter({
@@ -41,8 +35,12 @@ export const postRouter = createTRPCRouter({
     }),
 
   getLatest: protectedProcedure.query(async ({ ctx }) => {
-    const cacheKey = generateCacheKey("USER", ctx.session.userId, "latest-post");
-    
+    const cacheKey = generateCacheKey(
+      "USER",
+      ctx.session.userId,
+      "latest-post",
+    );
+
     return await cacheOrFetch(
       cacheKey,
       async () => {
@@ -52,20 +50,20 @@ export const postRouter = createTRPCRouter({
         });
         return post ?? null;
       },
-      CACHE_TTL.MEDIUM
+      CACHE_TTL.MEDIUM,
     );
   }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const cacheKey = generateCacheKey("USER", ctx.session.userId, "all-posts");
-    
+
     return await cacheOrFetch(
       cacheKey,
       async () => {
         // Use DAL function for proper auth and data fetching
         return await getUserPosts();
       },
-      CACHE_TTL.MEDIUM
+      CACHE_TTL.MEDIUM,
     );
   }),
 

@@ -63,14 +63,14 @@ describe("Redis Client", () => {
     const testValue = "expires-soon";
 
     await redis.setEx(testKey, 1, testValue); // 1 second TTL
-    
+
     const initialValue = await redis.get(testKey);
     expect(initialValue).toBe(testValue);
 
     // Wait for expiration
-    await new Promise(resolve => setTimeout(resolve, 1100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
     const expiredValue = await redis.get(testKey);
     expect(expiredValue).toBeNull();
   });
-}); 
+});

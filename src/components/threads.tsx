@@ -28,4 +28,4 @@ export function Threads({ editor }: ThreadsProps) {
       <FloatingComposer editor={editor} className="floating-composer" />
     </>
   );
-} 
+}
