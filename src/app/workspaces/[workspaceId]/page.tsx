@@ -17,11 +17,13 @@ import {
 import { Label } from "~/components/ui/label";
 import { FileText, Plus, User, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { InviteUserDialog } from "~/components/invite-user-dialog";
 
 export default function WorkspaceDetailPage() {
   const { workspaceId } = useParams();
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [newPageEmoji, setNewPageEmoji] = useState("📄");
 
@@ -66,6 +68,9 @@ export default function WorkspaceDetailPage() {
     router.push(`/workspaces/${String(workspaceId)}/pages/${pageId}`);
   };
 
+  // TODO: Get workspace name from API if available. For now, use placeholder.
+  const workspaceName = `Workspace #${workspaceIdNum}`;
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -90,66 +95,77 @@ export default function WorkspaceDetailPage() {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Workspace Pages</h1>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Page
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Page</DialogTitle>
-              <DialogDescription>
-                Create a new page in this workspace.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="emoji">Emoji</Label>
-                <Input
-                  id="emoji"
-                  value={newPageEmoji}
-                  onChange={(e) => setNewPageEmoji(e.target.value)}
-                  placeholder="📄"
-                  maxLength={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={newPageTitle}
-                  onChange={(e) => setNewPageTitle(e.target.value)}
-                  placeholder="Enter page title..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      void handleCreatePage();
+        <div className="flex gap-2">
+          <Button onClick={() => setIsInviteDialogOpen(true)}>
+            <User className="mr-2 h-4 w-4" /> Invite users
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Page
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Page</DialogTitle>
+                <DialogDescription>
+                  Create a new page in this workspace.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emoji">Emoji</Label>
+                  <Input
+                    id="emoji"
+                    value={newPageEmoji}
+                    onChange={(e) => setNewPageEmoji(e.target.value)}
+                    placeholder="📄"
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={newPageTitle}
+                    onChange={(e) => setNewPageTitle(e.target.value)}
+                    placeholder="Enter page title..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void handleCreatePage();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreatePage}
+                    disabled={
+                      !newPageTitle.trim() || createPageMutation.isPending
                     }
-                  }}
-                />
+                  >
+                    {createPageMutation.isPending ? "Creating..." : "Create Page"}
+                  </Button>
+                </div>
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreatePage}
-                  disabled={
-                    !newPageTitle.trim() || createPageMutation.isPending
-                  }
-                >
-                  {createPageMutation.isPending ? "Creating..." : "Create Page"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+      <InviteUserDialog
+        workspaceId={workspaceIdNum}
+        workspaceName={workspaceName}
+        open={isInviteDialogOpen}
+        onOpenChange={setIsInviteDialogOpen}
+      />
 
       {!pages || pages.length === 0 ? (
         <div className="py-12 text-center">

@@ -76,4 +76,47 @@ export const workspaceRouter = createTRPCRouter({
       });
       return invite;
     }),
+
+  getInvites: protectedProcedure.query(async ({ ctx }) => {
+    // Get all pending invites for the current user
+    return ctx.db.workspaceInvite.findMany({
+      where: {
+        invitedUserId: ctx.session.userId,
+        status: "pending",
+      },
+      include: {
+        workspace: true,
+        inviter: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }),
+
+  acceptInvite: protectedProcedure
+    .input(z.object({ inviteId: z.number().int() }))
+    .mutation(async ({ ctx, input }) => {
+      // Find the invite and ensure it belongs to the current user
+      const invite = await ctx.db.workspaceInvite.findUnique({
+        where: { id: input.inviteId },
+      });
+      if (!invite || invite.invitedUserId !== ctx.session.userId) {
+        throw new Error("Invite not found");
+      }
+      if (invite.status !== "pending") {
+        throw new Error("Invite is not pending");
+      }
+      // Add membership
+      await ctx.db.workspaceMembership.create({
+        data: {
+          workspaceId: invite.workspaceId,
+          userId: ctx.session.userId,
+        },
+      });
+      // Mark invite as accepted
+      await ctx.db.workspaceInvite.update({
+        where: { id: input.inviteId },
+        data: { status: "accepted" },
+      });
+      return { success: true };
+    }),
 });

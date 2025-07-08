@@ -24,6 +24,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { MoreHorizontal, Edit, UserPlus, Settings } from "lucide-react";
+import { InviteUserDialog } from "~/components/invite-user-dialog";
 
 interface Workspace {
   id: number;
@@ -102,8 +103,6 @@ export default function WorkspacesPage() {
 
   const openInviteDialog = (workspace: Workspace) => {
     setCurrentWorkspace(workspace);
-    setEmail("");
-    setInviteError("");
     setShowInvite(true);
   };
 
@@ -116,8 +115,6 @@ export default function WorkspacesPage() {
   const closeInviteDialog = () => {
     setShowInvite(false);
     setCurrentWorkspace(null);
-    setEmail("");
-    setInviteError("");
   };
 
   const closeRenameDialog = () => {
@@ -290,50 +287,15 @@ export default function WorkspacesPage() {
         </div>
       )}
 
-      {/* Invite User Dialog */}
-      <Dialog open={showInvite} onOpenChange={closeInviteDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Invite User to {currentWorkspace?.name}</DialogTitle>
-            <DialogDescription>
-              Send an invitation to collaborate in this workspace.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="invite-email">Email Address</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && email.trim()) {
-                    void handleInvite();
-                  }
-                }}
-              />
-              {inviteError && (
-                <p className="text-sm text-red-600">{inviteError}</p>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeInviteDialog}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void handleInvite()}
-              disabled={inviteUser.status === "pending" || !email.trim()}
-            >
-              {inviteUser.status === "pending"
-                ? "Sending..."
-                : "Send Invitation"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InviteUserDialog
+        workspaceId={currentWorkspace?.id ?? 0}
+        workspaceName={currentWorkspace?.name ?? ""}
+        open={showInvite}
+        onOpenChange={(open) => {
+          if (!open) closeInviteDialog();
+        }}
+        onSuccess={() => setInviteSuccess(true)}
+      />
 
       {/* Rename Workspace Dialog */}
       <Dialog open={showRename} onOpenChange={closeRenameDialog}>

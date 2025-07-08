@@ -11,6 +11,7 @@ import {
   Users,
   FileText,
   Search,
+  Mail,
 } from "lucide-react";
 import { api } from "~/trpc/react";
 
@@ -66,6 +67,12 @@ export function NotionSidebar({
       icon: Home,
       href: "/",
       isActive: pathname === "/",
+    },
+    {
+      title: "Invites",
+      icon: Mail,
+      href: "/invites",
+      isActive: pathname === "/invites",
     },
     {
       title: "Search",
