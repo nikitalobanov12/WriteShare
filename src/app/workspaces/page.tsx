@@ -45,18 +45,7 @@ export default function WorkspacesPage() {
       console.error("Failed to create workspace:", error);
     },
   });
-  const inviteUser = api.workspace.inviteUser.useMutation({
-    onSuccess: () => {
-      setEmail("");
-      setShowInvite(false);
-      setInviteSuccess(true);
-      setTimeout(() => setInviteSuccess(false), 3000);
-    },
-    onError: (error) => {
-      setInviteError(error.message);
-      setTimeout(() => setInviteError(""), 5000);
-    },
-  });
+ 
 
   const [showCreate, setShowCreate] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
@@ -64,10 +53,8 @@ export default function WorkspacesPage() {
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(
     null,
   );
-  const [email, setEmail] = useState("");
   const [wsName, setWsName] = useState("");
   const [newName, setNewName] = useState("");
-  const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
   const handleCreate = async () => {
@@ -82,20 +69,7 @@ export default function WorkspacesPage() {
     }
   };
 
-  const handleInvite = async () => {
-    if (currentWorkspace && email.trim()) {
-      setInviteError("");
-      try {
-        await inviteUser.mutateAsync({
-          workspaceId: currentWorkspace.id,
-          email: email.trim(),
-        });
-      } catch (error) {
-        // Error handling is done in the mutation onError callback
-        console.error(error);
-      }
-    }
-  };
+
 
   const handleCardClick = (workspaceId: number) => {
     router.push(`/workspaces/${workspaceId}`);
@@ -297,6 +271,7 @@ export default function WorkspacesPage() {
         onSuccess={() => setInviteSuccess(true)}
       />
 
+      
       {/* Rename Workspace Dialog */}
       <Dialog open={showRename} onOpenChange={closeRenameDialog}>
         <DialogContent className="sm:max-w-[425px]">
