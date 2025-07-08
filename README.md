@@ -163,4 +163,24 @@ Data is stored in PostgreSQL (via Prisma) and cached in Redis for fast access.
 ### Summary
 This Notion clone is designed for maintainability, scalability, and real-time collaboration. Modern full-stack patterns are used: Next.js App Router, tRPC, Prisma, shadcn/ui, Liveblocks/Yjs, Redis caching, and Dockerized services. The architecture prioritizes developer experience, performance, and accessibility.
 
+## Challenges
+
+### Real-time Collaboration & Infinite Save Loops
+Implementing real-time collaborative editing with Liveblocks, Yjs, and Tiptap introduced several challenges:
+
+- **Infinite Save Loop:**
+  - The initial implementation kept local content state in the parent component and attempted to auto-save on every change. This conflicted with the collaborative editor's own state management, causing an infinite save loop as the parent and editor continually triggered updates.
+  - **Solution:** The parent component was refactored to only manage and auto-save metadata (title, emoji), while the collaborative editor became the sole owner of the document content and CRDT state. The editor now handles its own persistence, and the parent only saves when title or emoji change.
+
+- **CRDT State Management:**
+  - Ensuring the CRDT state (used for conflict-free real-time editing) was correctly initialized from the backend and saved back on every change required careful separation of concerns. The backend exposes a dedicated mutation for updating only the CRDT state, and the editor is responsible for calling it when collaborative changes occur.
+
+- **Frontend/Backend API Consistency:**
+  - The collaborative editor originally relied on a global `window.api` pattern to trigger backend saves, which was fragile and not type-safe. The solution was to expose the backend mutation via tRPC and call it directly from the editor, ensuring type safety and maintainability.
+
+- **State Initialization & Debouncing:**
+  - Properly initializing state from the backend and debouncing updates to avoid excessive network calls was essential for both performance and user experience. Debouncing is now only applied to metadata fields, and the collaborative content is managed by Yjs/Liveblocks with its own throttling.
+
+These changes resulted in a robust, scalable, and maintainable real-time collaborative editing experience, with clear separation between document metadata and collaborative content state.
+
 

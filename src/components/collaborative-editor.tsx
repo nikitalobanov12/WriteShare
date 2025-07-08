@@ -16,6 +16,10 @@ import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import Heading from "@tiptap/extension-heading";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
 import { useOthers } from "@liveblocks/react/suspense";
 import { common, createLowlight } from "lowlight";
 import { Skeleton } from "./ui/skeleton";
@@ -79,7 +83,15 @@ export function CollaborativeEditor({
       StarterKit.configure({
         history: false,
         codeBlock: false,
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
       }),
+      Heading,
+      BulletList,
+      OrderedList,
+      ListItem,
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -205,7 +217,6 @@ export function CollaborativeEditor({
         <EditorContent
           editor={editor}
           placeholder={placeholder}
-          className="prose prose-sm sm:prose-base dark:prose-invert max-w-none p-4 focus:outline-none"
         />
         <Threads editor={editor} />
         <FloatingToolbar editor={editor} />
