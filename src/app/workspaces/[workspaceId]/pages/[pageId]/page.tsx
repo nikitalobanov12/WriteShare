@@ -8,6 +8,8 @@ import { Input } from "~/components/ui/input";
 import { Skeleton } from "~/components/ui/skeleton";
 import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { useDebounce } from "~/hooks/use-debounce";
+import { Room } from "~/components/room";
+import { CollaborativeEditor } from "~/components/collaborative-editor";
 
 export default function PageDetailPage() {
   const { workspaceId, pageId } = useParams();
@@ -146,80 +148,77 @@ export default function PageDetailPage() {
     );
   }
 
+  const roomId = `page-${pageIdString}`;
+
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-900">
-      <div className="mx-auto max-w-4xl p-6">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Workspace
-          </Button>
+    <Room roomId={roomId}>
+      <div className="min-h-screen bg-white dark:bg-zinc-900">
+        <div className="mx-auto max-w-4xl p-6">
+          {/* Header */}
+          <div className="mb-8 flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Workspace
+            </Button>
 
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
-            {updatePageMutation.isPending && (
-              <div className="flex items-center gap-1">
-                <Save className="h-3 w-3 animate-spin" />
-                Saving...
-              </div>
-            )}
-            {lastSaved && !updatePageMutation.isPending && (
-              <div className="flex items-center gap-1">
-                <Save className="h-3 w-3" />
-                Saved {lastSaved.toLocaleTimeString()}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Page Content */}
-        <div className="space-y-6">
-          {/* Emoji and Title */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Input
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                placeholder="📄"
-                className="h-12 w-16 border-none p-0 text-center text-2xl shadow-none focus:ring-0 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
-                maxLength={2}
-              />
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                placeholder="Untitled"
-                className="h-12 border-none p-0 text-4xl font-bold shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-400 focus:ring-0 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
-              />
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400">
+              {updatePageMutation.isPending && (
+                <div className="flex items-center gap-1">
+                  <Save className="h-3 w-3 animate-spin" />
+                  Saving...
+                </div>
+              )}
+              {lastSaved && !updatePageMutation.isPending && (
+                <div className="flex items-center gap-1">
+                  <Save className="h-3 w-3" />
+                  Saved {lastSaved.toLocaleTimeString()}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Content Editor */}
-          <div className="space-y-2">
-            <textarea
-              id="content-editor"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Start writing your page content here... You can use Markdown formatting!"
-              className="min-h-[600px] w-full resize-none rounded-lg border p-4 font-mono text-base leading-relaxed placeholder:text-gray-400 dark:placeholder:text-zinc-400 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700"
-              style={{
-                fontFamily:
-                  'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-                fontSize: "14px",
-                lineHeight: "1.6",
-              }}
-            />
-            <p className="text-xs text-gray-500 dark:text-zinc-400">
-              💡 Tip: This editor supports Markdown formatting. Use **bold**,
-              *italic*, `code`, and more!
-            </p>
+          {/* Page Content */}
+          <div className="space-y-6">
+            {/* Emoji and Title */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Input
+                  value={emoji}
+                  onChange={(e) => setEmoji(e.target.value)}
+                  placeholder="📄"
+                  className="h-12 w-16 border-none p-0 text-center text-2xl shadow-none focus:ring-0 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-400"
+                  maxLength={2}
+                />
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={handleTitleKeyDown}
+                  placeholder="Untitled"
+                  className="h-12 border-none p-0 text-4xl font-bold shadow-none placeholder:text-gray-400 dark:placeholder:text-zinc-400 focus:ring-0 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+            </div>
+
+            {/* Collaborative Content Editor */}
+            <div className="space-y-2">
+              <CollaborativeEditor
+                initialContent={content}
+                placeholder="Start writing your page content here... You can format text, add lists, and collaborate in real-time!"
+                onUpdate={(newContent) => {
+                  setContent(newContent);
+                }}
+              />
+              <p className="text-xs text-gray-500 dark:text-zinc-400">
+                💡 Tip: This is a collaborative editor. Multiple people can edit simultaneously!
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Room>
   );
 }

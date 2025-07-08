@@ -190,3 +190,83 @@
   --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", 
     Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
 }
+
+/* Enhanced Editor Styles */
+@layer components {
+  /* Table styles */
+  .ProseMirror table {
+    @apply border-collapse border border-zinc-200 dark:border-zinc-700;
+    table-layout: fixed;
+    width: 100%;
+    margin: 1rem 0;
+  }
+
+  .ProseMirror th,
+  .ProseMirror td {
+    @apply border border-zinc-200 dark:border-zinc-700 px-3 py-2;
+    vertical-align: top;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .ProseMirror th {
+    @apply bg-zinc-50 dark:bg-zinc-800 font-medium;
+  }
+
+  /* Code block styles */
+  .ProseMirror pre {
+    @apply bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4 overflow-x-auto;
+    font-family: 'JetBrains Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  }
+
+  .ProseMirror code {
+    @apply bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-sm;
+    font-family: 'JetBrains Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  }
+
+  /* Highlight styles */
+  .ProseMirror mark {
+    @apply bg-yellow-200 dark:bg-yellow-900/50 px-0.5 rounded;
+  }
+
+  /* Task list styles */
+  .ProseMirror ul[data-type="taskList"] {
+    @apply list-none pl-0;
+  }
+
+  .ProseMirror li[data-type="taskItem"] {
+    @apply flex items-start gap-2 my-1;
+  }
+
+  .ProseMirror li[data-type="taskItem"] > label {
+    @apply flex-shrink-0 mt-1;
+  }
+
+  .ProseMirror li[data-type="taskItem"] > label > input[type="checkbox"] {
+    @apply w-4 h-4 rounded border-zinc-300 dark:border-zinc-600;
+  }
+
+  /* Link styles */
+  .ProseMirror a {
+    @apply text-blue-500 hover:text-blue-600 underline;
+  }
+
+  /* Blockquote styles */
+  .ProseMirror blockquote {
+    @apply border-l-4 border-zinc-300 dark:border-zinc-600 pl-4 italic;
+  }
+
+  /* Focus outline for accessibility */
+  .ProseMirror:focus {
+    @apply outline-none;
+  }
+
+  /* Placeholder styling */
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-zinc-400 dark:text-zinc-600;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+}

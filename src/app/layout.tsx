@@ -1,4 +1,6 @@
 import "~/styles/globals.css";
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-tiptap/styles.css";
 
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
