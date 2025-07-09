@@ -53,7 +53,7 @@ export function InviteUserDialog({
         workspaceId,
         email: email.trim(),
       });
-    } catch (error) {
+    } catch {
       // Error handled in onError
     }
   };
