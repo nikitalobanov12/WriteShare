@@ -61,6 +61,18 @@ export function NotionSidebar({
   const { data: workspaces = [] } = api.workspace.getWorkspaces.useQuery();
   const [searchQuery, setSearchQuery] = React.useState("");
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+
+  // Filter workspaces by name or by matching any page title
+  const filteredWorkspaces = React.useMemo(() => {
+    if (!normalizedSearch) return workspaces;
+    return workspaces.filter((workspace) => {
+      if (workspace.name.toLowerCase().includes(normalizedSearch)) return true;
+      // We'll filter pages inside WorkspaceItem
+      return false;
+    });
+  }, [workspaces, normalizedSearch]);
+
   const navigationItems = [
     {
       title: "Home",
@@ -74,12 +86,7 @@ export function NotionSidebar({
       href: "/invites",
       isActive: pathname === "/invites",
     },
-    {
-      title: "Search",
-      icon: Search,
-      href: "/search",
-      isActive: pathname === "/search",
-    },
+    // Removed Search nav item
     {
       title: "Settings",
       icon: Settings,
@@ -107,7 +114,6 @@ export function NotionSidebar({
             <ModeToggle />
           </div>
         </div>
-
         {/* Search Bar */}
         <div className="px-4 pb-4">
           <div className="relative">
@@ -117,11 +123,11 @@ export function NotionSidebar({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
+              aria-label="Search workspaces and pages"
             />
           </div>
         </div>
       </SidebarHeader>
-
       <SidebarContent>
         {/* Main Navigation */}
         <SidebarGroup>
@@ -144,7 +150,6 @@ export function NotionSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
         {/* Workspaces */}
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center justify-between">
@@ -161,22 +166,23 @@ export function NotionSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {workspaces.map((workspace) => (
+              {filteredWorkspaces.map((workspace) => (
                 <WorkspaceItem
                   key={workspace.id}
                   workspace={workspace}
                   onClick={() => handleWorkspaceClick(workspace.id)}
                   isActive={pathname.startsWith(`/workspaces/${workspace.id}`)}
+                  searchQuery={normalizedSearch}
                 />
               ))}
-              {workspaces.length === 0 && (
+              {filteredWorkspaces.length === 0 && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     onClick={handleCreateWorkspace}
                     className="text-muted-foreground"
                   >
                     <Plus className="h-4 w-4" />
-                    Create your first workspace
+                    No workspaces found
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
@@ -230,45 +236,57 @@ export function NotionSidebar({
   );
 }
 
+// Update WorkspaceItem to accept searchQuery and filter pages
 function WorkspaceItem({
   workspace,
   onClick,
   isActive,
+  searchQuery,
 }: {
   workspace: Workspace;
   onClick: () => void;
   isActive: boolean;
+  searchQuery: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(isActive);
-
-  // Get pages for this workspace
   const { data: pages = [] } = api.page.getWorkspacePages.useQuery(
     { workspaceId: workspace.id },
     {
-      enabled: isOpen, // Only fetch when expanded
+      enabled: isOpen || !!searchQuery, // Always fetch if searching
       refetchOnWindowFocus: false,
     },
   );
-
+  // Filter pages by search query
+  const filteredPages = React.useMemo(() => {
+    if (!searchQuery) return pages;
+    // Recursively filter pages and their children
+    function filterPages(pagesList: Array<{ id: string; title: string; emoji?: string | null; parentId?: string | null; }>): Array<{ id: string; title: string; emoji?: string | null; parentId?: string | null; }> {
+      return pagesList
+        .filter((page) =>
+          page.title.toLowerCase().includes(searchQuery)
+        )
+        .map((page) => ({ ...page }));
+    }
+    return filterPages(pages);
+  }, [pages, searchQuery]);
   // Filter top-level pages (pages without a parent)
-  const topLevelPages = pages.filter((page) => !page.parentId);
-
+  const topLevelPages = filteredPages.filter((page) => !page.parentId);
   React.useEffect(() => {
     if (isActive) {
       setIsOpen(true);
     }
-  }, [isActive]);
-
+    if (searchQuery) {
+      setIsOpen(true);
+    }
+  }, [isActive, searchQuery]);
   const handlePageClick = (pageId: string) => {
     router.push(`/workspaces/${workspace.id}/pages/${pageId}`);
   };
-
   const handleCreatePage = () => {
     router.push(`/workspaces/${workspace.id}`);
   };
-
   return (
     <SidebarMenuItem>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -287,16 +305,13 @@ function WorkspaceItem({
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={onClick}
-                isActive={
-                  isActive && pathname === `/workspaces/${workspace.id}`
-                }
+                isActive={isActive && pathname === `/workspaces/${workspace.id}`}
                 className="w-full justify-start"
               >
                 <FileText className="h-4 w-4" />
                 Overview
               </SidebarMenuButton>
             </SidebarMenuItem>
-
             {/* Pages Section */}
             <SidebarMenuItem>
               <div className="flex items-center justify-between px-2 py-1">
@@ -314,7 +329,6 @@ function WorkspaceItem({
                 </Button>
               </div>
             </SidebarMenuItem>
-
             {/* Pages List */}
             {topLevelPages.length === 0 ? (
               <SidebarMenuItem>
@@ -323,7 +337,7 @@ function WorkspaceItem({
                   className="text-muted-foreground w-full justify-start text-xs"
                 >
                   <Plus className="h-3 w-3" />
-                  Create your first page
+                  {searchQuery ? "No pages found" : "Create your first page"}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ) : (
@@ -331,9 +345,10 @@ function WorkspaceItem({
                 <PageTreeItem
                   key={page.id}
                   page={page}
-                  pages={pages}
+                  pages={filteredPages}
                   workspaceId={workspace.id}
                   onPageClick={handlePageClick}
+                  searchQuery={searchQuery}
                 />
               ))
             )}
@@ -361,68 +376,85 @@ interface PageTreeItemProps {
   onPageClick: (pageId: string) => void;
 }
 
+// Update PageTreeItem to accept searchQuery and filter children
 function PageTreeItem({
   page,
   pages,
   workspaceId,
   onPageClick,
-}: PageTreeItemProps) {
+  searchQuery,
+}: PageTreeItemProps & { searchQuery: string }) {
   const pathname = usePathname();
   const currentPageId = pathname.split("/").pop();
-
   // Get child pages for this page
   const childPages = pages.filter((p) => p.parentId === page.id);
-
   const isActive = currentPageId === page.id;
-
-  if (childPages.length === 0) {
-    return (
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          isActive={isActive}
-          onClick={() => onPageClick(page.id)}
-          className="w-full justify-start pl-8 text-xs"
-        >
-          <span className="mr-1 text-xs">{page.emoji ?? "📄"}</span>
-          <span className="truncate">{page.title}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  }
-
-  return (
-    <SidebarMenuItem>
-      <Collapsible
-        className="group/page-collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
-        defaultOpen={
-          isActive || childPages.some((child) => child.id === currentPageId)
-        }
-      >
-        <CollapsibleTrigger asChild>
+  // If searching, only show children that match
+  const visibleChildPages = searchQuery
+    ? childPages.filter((child) =>
+        child.title.toLowerCase().includes(searchQuery)
+      )
+    : childPages;
+  if (visibleChildPages.length === 0) {
+    // Only show leaf if it matches search or not searching
+    if (!searchQuery || page.title.toLowerCase().includes(searchQuery)) {
+      return (
+        <SidebarMenuItem>
           <SidebarMenuButton
             isActive={isActive}
             onClick={() => onPageClick(page.id)}
             className="w-full justify-start pl-8 text-xs"
           >
-            <ChevronRight className="h-3 w-3 transition-transform" />
             <span className="mr-1 text-xs">{page.emoji ?? "📄"}</span>
             <span className="truncate">{page.title}</span>
           </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {childPages.map((childPage) => (
-              <PageTreeItem
-                key={childPage.id}
-                page={childPage}
-                pages={pages}
-                workspaceId={workspaceId}
-                onPageClick={onPageClick}
-              />
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuItem>
-  );
+        </SidebarMenuItem>
+      );
+    }
+    return null;
+  }
+  // Show parent if it or any child matches
+  if (
+    page.title.toLowerCase().includes(searchQuery) ||
+    visibleChildPages.length > 0
+  ) {
+    return (
+      <SidebarMenuItem>
+        <Collapsible
+          className="group/page-collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
+          defaultOpen={
+            isActive ||
+            visibleChildPages.some((child) => child.id === currentPageId)
+          }
+        >
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              isActive={isActive}
+              onClick={() => onPageClick(page.id)}
+              className="w-full justify-start pl-8 text-xs"
+            >
+              <ChevronRight className="h-3 w-3 transition-transform" />
+              <span className="mr-1 text-xs">{page.emoji ?? "📄"}</span>
+              <span className="truncate">{page.title}</span>
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarMenuSub>
+              {visibleChildPages.map((childPage) => (
+                <PageTreeItem
+                  key={childPage.id}
+                  page={childPage}
+                  pages={pages}
+                  workspaceId={workspaceId}
+                  onPageClick={onPageClick}
+                  searchQuery={searchQuery}
+                />
+              ))}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
+    );
+  }
+  return null;
 }
