@@ -2,25 +2,60 @@ import "server-only";
 import { cache } from "react";
 import { auth } from "@/auth";
 import { db } from "~/server/db";
+import { cookies as nextCookies } from "next/headers";
+import { sessionCache } from "~/lib/cache";
+import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+
+interface SessionData {
+  isAuth: true;
+  userId: string;
+  userEmail: string;
+  userName: string | null;
+  userImage: string | null;
+}
 
 /**
  * Verify the current session and return session data
  * This function is cached to avoid multiple database calls during a single request
  */
-export const verifySession = cache(async () => {
-  const session = await auth();
+export const verifySession = cache(async (): Promise<SessionData | null> => {
+  // 1. Get session token from cookies (handle possible undefined)
+  const cookieStore = nextCookies() as unknown as ReadonlyRequestCookies;
+  const sessionToken =
+    (cookieStore.get("next-auth.session-token")?.value ??
+      cookieStore.get("__Secure-next-auth.session-token")?.value) ??
+    undefined;
 
+  // 2. Try Redis cache first
+  if (typeof sessionToken === "string" && sessionToken.length > 0) {
+    const cachedSession = await sessionCache.get<SessionData>(sessionToken);
+    if (cachedSession && typeof cachedSession.userId === "string") {
+      // Optionally: console.log("[SESSION CACHE HIT]", sessionToken);
+      return cachedSession;
+    }
+  }
+
+  // 3. Fallback to NextAuth
+  const session = await auth();
   if (!session?.user?.id) {
     return null;
   }
 
-  return {
+  const sessionData: SessionData = {
     isAuth: true,
     userId: session.user.id,
-    userEmail: session.user.email,
-    userName: session.user.name,
-    userImage: session.user.image,
+    userEmail: session.user.email ?? "",
+    userName: session.user.name ?? null,
+    userImage: session.user.image ?? null,
   };
+
+  // 4. Cache the session in Redis
+  if (typeof sessionToken === "string" && sessionToken.length > 0) {
+    await sessionCache.set(sessionToken, sessionData);
+    // Optionally: console.log("[SESSION CACHE MISS]", sessionToken);
+  }
+
+  return sessionData;
 });
 
 /**
