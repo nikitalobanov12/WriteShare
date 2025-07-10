@@ -1,5 +1,5 @@
 # 1. Base image for dependencies
-FROM oven/bun:1 as deps
+FROM oven/bun:1 AS deps
 
 # Install openssl for Prisma
 RUN apt-get update -y && apt-get install -y openssl
@@ -12,7 +12,7 @@ COPY prisma ./prisma
 RUN bun install --frozen-lockfile
 
 # 2. Builder image
-FROM oven/bun:1 as builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
 
 # Copy dependencies from the previous stage
@@ -23,10 +23,13 @@ COPY . .
 RUN bun run build
 
 # 3. Production image
-FROM oven/bun:1 as runner
+FROM oven/bun:1 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# Install openssl for Prisma runtime
+RUN apt-get update -y && apt-get install -y openssl
 
 # Copy the standalone output
 COPY --from=builder /app/public ./public
