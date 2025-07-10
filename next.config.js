@@ -6,6 +6,10 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+  output: 'standalone',
+  experimental: {
+    serverComponentsExternalPackages: ["@node-rs/argon2", "bcrypt"],
+  },
   images: {
     remotePatterns: [
       {
