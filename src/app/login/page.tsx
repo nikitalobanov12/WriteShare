@@ -18,7 +18,7 @@ export default async function LoginPage({
   const session = await auth();
   const { callbackUrl } = await searchParams;
 
-  if (session) {
+  if (session?.user) {
     redirect(callbackUrl ?? "/");
   }
 

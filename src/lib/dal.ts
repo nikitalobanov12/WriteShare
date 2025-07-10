@@ -20,7 +20,7 @@ interface SessionData {
  */
 export const verifySession = cache(async (): Promise<SessionData | null> => {
   // 1. Get session token from cookies (handle possible undefined)
-  const cookieStore = nextCookies() as unknown as ReadonlyRequestCookies;
+  const cookieStore = await nextCookies() as unknown as ReadonlyRequestCookies;
   const sessionToken =
     (cookieStore.get("next-auth.session-token")?.value ??
       cookieStore.get("__Secure-next-auth.session-token")?.value) ??
