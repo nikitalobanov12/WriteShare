@@ -1,4 +1,6 @@
-# Notion Clone
+# WriteShare
+
+real time collaborative markdown editor
 
 ## Stack
 
