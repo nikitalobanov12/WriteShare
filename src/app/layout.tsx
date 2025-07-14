@@ -13,8 +13,8 @@ import { NotionSidebar } from "~/components/notion-sidebar";
 import { SidebarProvider, SidebarInset } from "~/components/ui/sidebar";
 
 export const metadata: Metadata = {
-  title: "Notion Clone",
-  description: "A collaborative Notion clone with real-time edits",
+  title: "WriteShare",
+  description: "A collaborative writing platform with real-time edits",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
