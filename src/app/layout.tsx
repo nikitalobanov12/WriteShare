@@ -15,7 +15,7 @@ import { SidebarProvider, SidebarInset } from "~/components/ui/sidebar";
 export const metadata: Metadata = {
   title: "WriteShare",
   description: "A collaborative writing platform with real-time edits",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/favicon.svg" }],
 };
 
 const geist = Geist({

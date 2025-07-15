@@ -1,0 +1,9 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" fill="#fff"/>
+  <!-- Scaled up classic pen nib shape with shoulders and sharp tip -->
+  <polygon points="32,4 56,38 44,62 20,62 8,38" fill="#18181B"/>
+  <!-- Arrow-shaped pen nib hole (negative space, taller, less sharp) -->
+  <polygon points="32,18 25,44 30,44 30,54 34,54 34,44 39,44" fill="#fff"/>
+  <!-- Scaled up pen nib slit -->
+  <rect x="30" y="56" width="4" height="7" rx="2" fill="#fff"/>
+</svg>
