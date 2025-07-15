@@ -1,139 +1,127 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider      = "prisma-client-js"
-    binaryTargets = ["native", "debian-openssl-1.1.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
+  @@index([name])
 }
 
-// Necessary for Next auth
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
-    createdWorkspaces Workspace[]
-    memberships   WorkspaceMembership[]
-    workspaceInvites WorkspaceInvite[] @relation("invitedUser")
-    sentWorkspaceInvites WorkspaceInvite[] @relation("inviter")
-    pages         Page[]
+  id                   String                @id @default(cuid())
+  name                 String?
+  email                String?               @unique
+  emailVerified        DateTime?
+  image                String?
+  accounts             Account[]
+  pages                Page[]
+  posts                Post[]
+  sessions             Session[]
+  createdWorkspaces    Workspace[]
+  workspaceInvites     WorkspaceInvite[]     @relation("invitedUser")
+  sentWorkspaceInvites WorkspaceInvite[]     @relation("inviter")
+  memberships          WorkspaceMembership[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
 }
 
-// Multi-tenancy: Workspaces and membership/invite support
 model Workspace {
-    id           Int      @id @default(autoincrement())
-    name         String
-    createdAt    DateTime @default(now())
-    createdBy    User     @relation(fields: [createdById], references: [id])
-    createdById  String
-    memberships  WorkspaceMembership[]
-    invites      WorkspaceInvite[]
-    pages        Page[]
+  id          Int                   @id @default(autoincrement())
+  name        String
+  createdAt   DateTime              @default(now())
+  createdById String
+  pages       Page[]
+  createdBy   User                  @relation(fields: [createdById], references: [id])
+  invites     WorkspaceInvite[]
+  memberships WorkspaceMembership[]
 }
 
 model WorkspaceMembership {
-    workspace   Workspace @relation(fields: [workspaceId], references: [id])
-    workspaceId Int
-    user        User      @relation(fields: [userId], references: [id])
-    userId      String
-    joinedAt    DateTime  @default(now())
+  workspaceId Int
+  userId      String
+  joinedAt    DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
-    @@id([workspaceId, userId])
+  @@id([workspaceId, userId])
 }
 
 model WorkspaceInvite {
-    id            Int       @id @default(autoincrement())
-    workspace     Workspace @relation(fields: [workspaceId], references: [id])
-    workspaceId   Int
-    invitedUser   User      @relation("invitedUser", fields: [invitedUserId], references: [id])
-    invitedUserId String
-    inviter       User      @relation("inviter", fields: [inviterId], references: [id])
-    inviterId     String
-    status        String    @default("pending")
-    createdAt     DateTime  @default(now())
+  id            Int       @id @default(autoincrement())
+  workspaceId   Int
+  invitedUserId String
+  inviterId     String
+  status        String    @default("pending")
+  createdAt     DateTime  @default(now())
+  invitedUser   User      @relation("invitedUser", fields: [invitedUserId], references: [id])
+  inviter       User      @relation("inviter", fields: [inviterId], references: [id])
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
 }
 
 model Page {
-    id          String    @id @default(uuid())
-    title       String
-    content     String?   @db.Text
-    emoji       String?
-    coverImage  String?
-    isArchived  Boolean   @default(false)
-    parentId    String?
-    workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-    workspaceId Int
-    author      User      @relation(fields: [authorId], references: [id])
-    authorId    String
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
-    crdtState   Bytes?
+  id          String    @id @default(uuid())
+  title       String
+  content     String?
+  emoji       String?
+  coverImage  String?
+  isArchived  Boolean   @default(false)
+  parentId    String?
+  workspaceId Int
+  authorId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  crdtState   Bytes?
+  author      User      @relation(fields: [authorId], references: [id])
+  parent      Page?     @relation("PageToPage", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Page[]    @relation("PageToPage")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-    // Self-referential relation for nested pages
-    parent      Page?     @relation("PageToPage", fields: [parentId], references: [id], onDelete: Cascade)
-    children    Page[]    @relation("PageToPage")
-
-    @@index([workspaceId])
-    @@index([parentId])
-    @@index([authorId])
+  @@index([workspaceId])
+  @@index([parentId])
+  @@index([authorId])
 }
