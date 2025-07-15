@@ -27,7 +27,7 @@ export default async function LoginPage({
       <Card className="mx-4 w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            Welcome to Notion Clone
+            Welcome to WriteShare
           </CardTitle>
           <CardDescription>
             Sign in to your account to access your workspace

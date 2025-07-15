@@ -108,7 +108,7 @@ export function NotionSidebar({
       <SidebarHeader className="border-border border-b">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold">Notion Clone</h1>
+            <h1 className="text-lg font-semibold">WriteShare</h1>
           </div>
           <div className="flex items-center gap-2">
             <ModeToggle />

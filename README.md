@@ -163,7 +163,7 @@ Data is stored in PostgreSQL (via Prisma) and cached in Redis for fast access.
 - ESLint and Prettier enforce code quality and style.
 
 ### Summary
-This Notion clone is designed for maintainability, scalability, and real-time collaboration. Modern full-stack patterns are used: Next.js App Router, tRPC, Prisma, shadcn/ui, Liveblocks/Yjs, Redis caching, and Dockerized services. The architecture prioritizes developer experience, performance, and accessibility.
+This app is designed for maintainability, scalability, and real-time collaboration. Modern full-stack patterns are used: Next.js App Router, tRPC, Prisma, shadcn/ui, Liveblocks/Yjs, Redis caching, and Dockerized services. The architecture prioritizes developer experience, performance, and accessibility.
 
 ## Challenges
 
